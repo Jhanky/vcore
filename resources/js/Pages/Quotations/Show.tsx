@@ -559,18 +559,6 @@ export default function Show({ quotation, allowedStatuses, isStatusLocked, catal
                 {activeTab === 'technical' && (
                     <TechnicalTab
                         localData={localData}
-                        setLocalData={setLocalData}
-                        editingInfo={editingInfo}
-                        setEditingInfo={setEditingInfo}
-                        editingCell={editingCell}
-                        setEditingCell={setEditingCell}
-                        handleChange={handleChange}
-                        openProductModal={openProductModal}
-                        openAddProductModal={openAddProductModal}
-                        catalogPanels={catalogPanels}
-                        catalogInverters={catalogInverters}
-                        catalogBatteries={catalogBatteries}
-                        quotation={quotation}
                         overdimensioning={overdimensioning}
                         specs={specs}
                     />
