@@ -1,4 +1,5 @@
 import { Zap, Sun, Cpu, Activity, TrendingUp, Box, Wallet } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 // Función para formatear valores en COP
 function fmt(v: number) {
@@ -12,6 +13,17 @@ interface TechnicalTabProps {
 }
 
 export default function TechnicalTab({ localData, overdimensioning, specs }: TechnicalTabProps) {
+    // Multiplicadores de producción mensual para Colombia
+    // Meses soleados (Ene, Feb, Dic) tienen mayor irradiación; meses lluviosos (May-Oct) menor
+    const monthlyMultipliers = [1.1, 1.05, 0.95, 0.85, 0.75, 0.8, 0.9, 0.95, 0.85, 0.75, 0.9, 1.05];
+    const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    const monthlyProduction = specs?.monthlyProduction || 0;
+
+    const monthlyData = monthNames.map((month, index) => ({
+        month,
+        production: Math.round(monthlyProduction * monthlyMultipliers[index]),
+    }));
+
     return (
         <div className="space-y-6">
             {/* Especificaciones Técnicas */}
@@ -145,6 +157,30 @@ export default function TechnicalTab({ localData, overdimensioning, specs }: Tec
                     <span>Tarifa: <strong className="text-[var(--text-primary)]">{fmt(specs?.energyTariff || 1000)}/kWh</strong></span>
                     <span>CF: <strong className="text-[var(--text-primary)]">{((specs?.yearlyProduction || 0) / ((localData?.power_kwp || 1) * 8760) * 100).toFixed(1)}%</strong></span>
                 </div>
+            </div>
+
+            {/* Gráfica de Producción Mensual */}
+            <div className="glass rounded-2xl p-6 space-y-4">
+                <h3 className="font-bold flex items-center gap-2 text-[var(--text-primary)]">
+                    <TrendingUp className="w-5 h-5 text-[var(--solar-gold)]" />
+                    Producción Estimada Mensual
+                </h3>
+                <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={monthlyData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-ui)" />
+                        <XAxis dataKey="month" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
+                        <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
+                        <Tooltip
+                            contentStyle={{
+                                background: 'var(--bg-content)',
+                                border: '1px solid var(--border-ui)',
+                                borderRadius: '0.5rem',
+                            }}
+                            formatter={(value: number) => [`${value.toLocaleString('es-CO')} kWh`, 'Producción']}
+                        />
+                        <Bar dataKey="production" fill="var(--solar-gold)" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                </ResponsiveContainer>
             </div>
         </div>
     );
