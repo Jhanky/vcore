@@ -1,128 +1,493 @@
-import { Calculator } from 'lucide-react';
+import { FileText, Sun, Cpu, Battery, Wrench, Pencil, User, MapPin, Calculator, RefreshCw } from 'lucide-react';
 
-interface FinancialTabProps {
-  localData: any;
-  totals: any;
-  editingCell: any;
-  setEditingCell: any;
-  handleChange: any;
-  quotation: any;
+function fmt(v: number) {
+    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v || 0);
 }
 
-export default function FinancialTab({ localData, totals, editingCell, setEditingCell, handleChange, quotation }: FinancialTabProps) {
-  const fmt = (v: number) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v || 0);
-
-  // Componente EditableCell inline para celdas editables en la tabla AUI
-  const EditableCell = ({ value, section, id, field, type = "number", suffix = "", prefix = "", fmtFn = (v: any) => v }: any) => {
+// Componente EditableCell para edición inline
+const EditableCell = ({ value, section, id, field, type = "number", suffix = "", prefix = "", fmtFn = (v: any) => v, handleChange, editingCell, setEditingCell }: any) => {
     const isEditing = editingCell?.section === section && editingCell?.id === id && editingCell?.field === field;
 
     if (isEditing) {
-      return (
-        <input
-          autoFocus
-          type={type}
-          step="any"
-          className="w-full bg-[var(--bg-content)] border-[var(--solar-gold)] rounded px-2 py-1 text-right focus:ring-1 focus:ring-[var(--solar-gold)] outline-none"
-          value={value}
-          onChange={(e) => handleChange(section, id, field, e.target.value)}
-          onBlur={() => setEditingCell(null)}
-          onKeyDown={(e) => e.key === 'Enter' && setEditingCell(null)}
-        />
-      );
+        return (
+            <input
+                autoFocus
+                type={type}
+                step="any"
+                className="w-full bg-[var(--bg-content)] border-[var(--solar-gold)] rounded px-2 py-1 text-right focus:ring-1 focus:ring-[var(--solar-gold)] outline-none"
+                value={value}
+                onChange={(e) => handleChange(section, id, field, e.target.value)}
+                onBlur={() => setEditingCell(null)}
+                onKeyDown={(e) => e.key === 'Enter' && setEditingCell(null)}
+            />
+        );
     }
 
     return (
-      <div
-        onDoubleClick={() => {}}
-        className="cursor-pointer hover:bg-[var(--solar-gold)]/5 rounded px-2 py-1 transition-colors"
-      >
-        {prefix}{fmtFn(value)}{suffix}
-      </div>
+        <div
+            onDoubleClick={() => {
+                if (handleChange) {
+                    handleChange({ section, id, field });
+                }
+            }}
+            className={`cursor-pointer hover:bg-[var(--solar-gold)]/5 rounded px-2 py-1 transition-colors ${handleChange ? '' : 'pointer-events-none'}`}
+        >
+            {prefix}{fmtFn(value)}{suffix}
+        </div>
     );
-  };
+};
 
-  return (
-    <div className="space-y-6">
-      <div className="glass rounded-2xl border border-[var(--solar-gold)]/20 overflow-hidden">
-        <div className="bg-[var(--solar-gold)]/10 p-6 border-b border-[var(--solar-gold)]/20">
-          <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2 mb-1">
-            <Calculator className="w-5 h-5 text-[var(--solar-gold)]" /> Resumen Financiero
-          </h2>
-          <p className="text-sm text-[var(--text-secondary)]">Cálculos AUI</p>
+interface FinancialTabProps {
+    localData: any;
+    setLocalData: any;
+    editingInfo: boolean;
+    setEditingInfo: any;
+    editingCell: any;
+    setEditingCell: any;
+    handleChange: any;
+    openProductModal: any;
+    openAddProductModal: any;
+    catalogPanels: any;
+    catalogInverters: any;
+    catalogBatteries: any;
+    quotation: any;
+    overdimensioning: any;
+    totals: any;
+}
+
+export default function FinancialTab(props: FinancialTabProps) {
+    const {
+        localData,
+        setLocalData,
+        editingInfo,
+        setEditingInfo,
+        editingCell,
+        setEditingCell,
+        handleChange,
+        openProductModal,
+        openAddProductModal,
+        catalogPanels,
+        catalogInverters,
+        catalogBatteries,
+        quotation,
+        overdimensioning,
+        totals,
+    } = props;
+
+    const sectionCls = "glass rounded-2xl p-6 md:p-8 space-y-6";
+
+    const handleEdit = (section: string, id: number | string, field: string) => {
+        setEditingCell({ section, id, field });
+    };
+
+    const handleInfoChange = (field: string, value: any) => {
+        if (handleChange) {
+            handleChange('info', field, field, value);
+        }
+    };
+
+    // Wrapper para EditableCell que incluye handleChange y funciones de edicion
+    const EditableCellWrapper = (cellProps: any) => (
+        <EditableCell
+            {...cellProps}
+            handleChange={handleEdit}
+            editingCell={editingCell}
+            setEditingCell={setEditingCell}
+        />
+    );
+
+    // Componente interno para celdas del Resumen AUI (ya existentes en FinancialTab)
+    const AUIEditableCell = ({ value, section, id, field, type = "number", suffix = "", prefix = "", fmtFn = (v: any) => v }: any) => {
+        const isEditing = editingCell?.section === section && editingCell?.id === id && editingCell?.field === field;
+
+        if (isEditing) {
+            return (
+                <input
+                    autoFocus
+                    type={type}
+                    step="any"
+                    className="w-full bg-[var(--bg-content)] border-[var(--solar-gold)] rounded px-2 py-1 text-right focus:ring-1 focus:ring-[var(--solar-gold)] outline-none"
+                    value={value}
+                    onChange={(e) => handleChange(section, id, field, e.target.value)}
+                    onBlur={() => setEditingCell(null)}
+                    onKeyDown={(e) => e.key === 'Enter' && setEditingCell(null)}
+                />
+            );
+        }
+
+        return (
+            <div
+                onDoubleClick={() => handleEdit(section, id, field)}
+                className="cursor-pointer hover:bg-[var(--solar-gold)]/5 rounded px-2 py-1 transition-colors"
+            >
+                {prefix}{fmtFn(value)}{suffix}
+            </div>
+        );
+    };
+
+    return (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* COLUMNA IZQUIERDA (col-span-2) */}
+            <div className="lg:col-span-2 space-y-6">
+                {/* 1. Información General */}
+                <div className={sectionCls}>
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2 text-lg font-bold text-[var(--text-primary)]">
+                            <FileText className="w-5 h-5 text-[var(--solar-gold)]" /> Información General
+                        </div>
+                        <button
+                            onClick={() => setEditingInfo(!editingInfo)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
+                                editingInfo
+                                    ? 'bg-[var(--solar-gold)]/10 border-[var(--solar-gold)]/40 text-[var(--solar-gold)]'
+                                    : 'bg-[var(--surface)] border-[var(--border-ui)] text-[var(--text-secondary)] hover:border-[var(--solar-gold)]/40'
+                            }`}
+                        >
+                            <Pencil className="w-3 h-3" /> {editingInfo ? 'Editando…' : 'Editar'}
+                        </button>
+                    </div>
+
+                    {editingInfo ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="md:col-span-2">
+                                <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wider mb-1">Nombre del Proyecto</p>
+                                <input
+                                    className="w-full px-3 py-2 bg-[var(--surface)] border border-[var(--border-ui)] rounded-xl text-[var(--text-primary)] focus:border-[var(--solar-gold)] focus:ring focus:ring-[var(--solar-gold)]/20 transition-all text-sm"
+                                    value={localData.project_name || ''}
+                                    onChange={e => handleInfoChange('project_name', e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wider mb-1">Tipo de Sistema</p>
+                                <select
+                                    className="w-full px-3 py-2 bg-[var(--surface)] border border-[var(--border-ui)] rounded-xl text-[var(--text-primary)] focus:border-[var(--solar-gold)] focus:ring focus:ring-[var(--solar-gold)]/20 transition-all text-sm [&>option]:bg-[var(--bg-content)]"
+                                    value={localData.system_type || 'On-grid'}
+                                    onChange={e => handleInfoChange('system_type', e.target.value)}
+                                >
+                                    {['On-grid', 'Off-grid', 'Híbrido'].map(s => <option key={s} value={s}>{s}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wider mb-1">Tipo de Red</p>
+                                <select
+                                    className="w-full px-3 py-2 bg-[var(--surface)] border border-[var(--border-ui)] rounded-xl text-[var(--text-primary)] focus:border-[var(--solar-gold)] focus:ring focus:ring-[var(--solar-gold)]/20 transition-all text-sm [&>option]:bg-[var(--bg-content)]"
+                                    value={localData.network_type || 'monofasico'}
+                                    onChange={e => handleInfoChange('network_type', e.target.value)}
+                                >
+                                    {['monofasico', 'bifasico 220', 'trifasico 220', 'trifasico 440'].map(s => <option key={s} value={s}>{s}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wider mb-1">Potencia (kWp)</p>
+                                <input
+                                    type="number" step="0.1" min="0.1"
+                                    className="w-full px-3 py-2 bg-[var(--surface)] border border-[var(--border-ui)] rounded-xl text-[var(--text-primary)] focus:border-[var(--solar-gold)] focus:ring focus:ring-[var(--solar-gold)]/20 transition-all text-sm"
+                                    value={localData.power_kwp || 0}
+                                    onChange={e => handleInfoChange('power_kwp', e.target.value)}
+                                />
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <input type="checkbox" id="fin-edit" className="w-4 h-4 accent-[var(--solar-gold)]"
+                                    checked={!!localData.requires_financing}
+                                    onChange={e => handleInfoChange('requires_financing', e.target.checked)}
+                                />
+                                <label htmlFor="fin-edit" className="text-sm text-[var(--text-primary)]">Requiere financiamiento</label>
+                            </div>
+                            <div className="md:col-span-2 flex items-center gap-2 text-sm text-[var(--text-secondary)] pt-2 border-t border-[var(--border-ui)]">
+                                <User className="w-4 h-4 text-[var(--solar-gold)]" />
+                                <span className="font-semibold text-[var(--text-primary)]">{quotation?.client?.name}</span>
+                                <span className="ml-2">{quotation?.client?.email}</span>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                                <div>
+                                    <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wider mb-1">Cliente</p>
+                                    <div className="flex items-center gap-2 text-[var(--text-primary)] font-semibold">
+                                        <User className="w-4 h-4 text-[var(--solar-gold)]" />
+                                        {quotation?.client?.name}
+                                    </div>
+                                    {quotation?.client?.document && <p className="text-sm text-[var(--text-secondary)] mt-1">Doc: {quotation.client.document}</p>}
+                                    {quotation?.client?.type && <p className="text-sm text-[var(--text-secondary)] mt-1">Tipo: {quotation.client.type}</p>}
+                                    <p className="text-sm text-[var(--text-secondary)] mt-1">{quotation?.client?.email}</p>
+                                    {quotation?.client?.phone && <p className="text-sm text-[var(--text-secondary)] mt-1">{quotation.client.phone}</p>}
+                                    {quotation?.client?.address && <p className="text-sm text-[var(--text-secondary)] mt-1 flex items-start gap-1"><MapPin className="w-4 h-4 mt-0.5" />{quotation.client.address}</p>}
+                                </div>
+                                <div>
+                                    <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wider mb-1">Responsable</p>
+                                    <p className="text-[var(--text-primary)]">{quotation?.user?.name}</p>
+                                </div>
+                            </div>
+                            <div className="space-y-4">
+                                <div>
+                                    <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wider mb-1">Especificaciones del Sistema</p>
+                                    <div className="bg-[var(--surface)] border border-[var(--border-ui)] rounded-xl p-4 space-y-2">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-[var(--text-secondary)]">Tipo:</span>
+                                            <span className="text-[var(--text-primary)] font-semibold">{localData?.system_type}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-[var(--text-secondary)]">Red:</span>
+                                            <span className="text-[var(--text-primary)] font-semibold capitalize">{localData?.network_type}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-[var(--text-secondary)]">Potencia:</span>
+                                            <span className="text-[var(--solar-gold)] font-bold">{localData?.power_kwp} kWp</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    {localData?.requires_financing && !editingInfo && (
+                        <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-center gap-2 text-sm text-blue-400 font-semibold">
+                            Proyecto con requerimiento de financiamiento
+                        </div>
+                    )}
+                </div>
+
+                {/* 2. Suministros (Productos) */}
+                <div className={sectionCls}>
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2 text-lg font-bold text-[var(--text-primary)]">
+                            <Sun className="w-5 h-5 text-[var(--solar-gold)]" /> Suministros (Productos)
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => openAddProductModal('panel')}
+                                className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-xl bg-[var(--surface)] border border-[var(--border-ui)] text-[var(--text-secondary)] hover:border-[var(--solar-gold)]/40 hover:text-[var(--solar-gold)] transition-all"
+                                title="Agregar panel"
+                            >
+                                <Sun className="w-3 h-3 text-amber-400" /> +
+                            </button>
+                            <button
+                                onClick={() => openAddProductModal('inverter')}
+                                className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-xl bg-[var(--surface)] border border-[var(--border-ui)] text-[var(--text-secondary)] hover:border-[var(--solar-gold)]/40 hover:text-[var(--solar-gold)] transition-all"
+                                title="Agregar inversor"
+                            >
+                                <Cpu className="w-3 h-3 text-blue-400" /> +
+                            </button>
+                            <button
+                                onClick={() => openAddProductModal('battery')}
+                                className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-xl bg-[var(--surface)] border border-[var(--border-ui)] text-[var(--text-secondary)] hover:border-[var(--solar-gold)]/40 hover:text-[var(--solar-gold)] transition-all"
+                                title="Agregar batería"
+                            >
+                                <Battery className="w-3 h-3 text-emerald-400" /> +
+                            </button>
+                        </div>
+                    </div>
+                    {quotation?.products?.length > 0 ? (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-sm whitespace-nowrap">
+                                <thead>
+                                    <tr className="border-b border-[var(--border-ui)] text-[var(--text-secondary)]">
+                                        <th className="pb-3 font-semibold">Tipo</th>
+                                        <th className="pb-3 font-semibold">Descripción</th>
+                                        <th className="pb-3 font-semibold text-center">Cant.</th>
+                                        <th className="pb-3 font-semibold text-right">V. Unitario</th>
+                                        <th className="pb-3 font-semibold text-right">% Util.</th>
+                                        <th className="pb-3 font-semibold text-right">V. Parcial</th>
+                                        <th className="pb-3 font-semibold text-right">Utilidad</th>
+                                        <th className="pb-3 font-semibold text-right">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-[var(--border-ui)]">
+                                    {localData.products.map((p: any) => {
+                                        const vParcial = p.quantity * p.unit_price_cop;
+                                        const util = vParcial * p.profit_percentage;
+                                        const total = vParcial + util;
+                                        return (
+                                            <tr key={p.id} className="text-[var(--text-primary)] hover:bg-[var(--surface)] transition-colors">
+                                                <td className="py-3 capitalize">
+                                                    <div className="flex items-center gap-2">
+                                                        {p.product_type === 'panel' && <Sun className="w-4 h-4 text-amber-400" />}
+                                                        {p.product_type === 'inverter' && <Cpu className="w-4 h-4 text-blue-400" />}
+                                                        {p.product_type === 'battery' && <Battery className="w-4 h-4 text-emerald-400" />}
+                                                        {p.product_type}
+                                                    </div>
+                                                </td>
+                                                <td className="py-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <div>
+                                                            <div className="font-semibold">{p.snapshot_brand}</div>
+                                                            <div className="text-xs text-[var(--text-secondary)]">{p.snapshot_model}</div>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => openProductModal(p.product_type, p.id)}
+                                                            className="p-1 hover:bg-[var(--solar-gold)]/10 rounded transition-colors"
+                                                            title="Cambiar producto"
+                                                        >
+                                                            <RefreshCw className="w-3 h-3 text-[var(--solar-gold)]" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td className="py-3 text-center">
+                                                    <EditableCellWrapper section="products" id={p.id} field="quantity" value={p.quantity} />
+                                                </td>
+                                                <td className="py-3 text-right">
+                                                    <EditableCellWrapper section="products" id={p.id} field="unit_price_cop" value={p.unit_price_cop} fmtFn={fmt} />
+                                                </td>
+                                                <td className="py-3 text-right">
+                                                    <EditableCellWrapper section="products" id={p.id} field="profit_percentage" value={p.profit_percentage} suffix="%" fmtFn={(v: any) => (v * 100).toFixed(0)} />
+                                                </td>
+                                                <td className="py-3 text-right text-[var(--text-secondary)]">{fmt(vParcial)}</td>
+                                                <td className="py-3 text-right text-[var(--text-secondary)]">{fmt(util)}</td>
+                                                <td className="py-3 text-right font-medium text-[var(--solar-gold)]">{fmt(total)}</td>
+                                            </tr>
+                                        )
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <p className="text-sm text-[var(--text-secondary)]">No hay suministros registrados.</p>
+                    )}
+                </div>
+
+                {/* 3. Ítems Complementarios */}
+                <div className={sectionCls}>
+                    <div className="flex items-center gap-2 text-lg font-bold text-[var(--text-primary)] mb-2">
+                        <Wrench className="w-5 h-5 text-[var(--solar-gold)]" /> Ítems Complementarios
+                    </div>
+                    {quotation?.items?.length > 0 ? (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-sm whitespace-nowrap">
+                                <thead>
+                                    <tr className="border-b border-[var(--border-ui)] text-[var(--text-secondary)]">
+                                        <th className="pb-3 font-semibold">Descripción</th>
+                                        <th className="pb-3 font-semibold text-center">Cant.</th>
+                                        <th className="pb-3 font-semibold">Unidad</th>
+                                        <th className="pb-3 font-semibold text-right">V. Unitario</th>
+                                        <th className="pb-3 font-semibold text-right">% Util.</th>
+                                        <th className="pb-3 font-semibold text-right">V. Parcial</th>
+                                        <th className="pb-3 font-semibold text-right">Utilidad</th>
+                                        <th className="pb-3 font-semibold text-right">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-[var(--border-ui)]">
+                                    {localData.items.map((i: any) => {
+                                        const vParcial = i.quantity * i.unit_price_cop;
+                                        const util = vParcial * i.profit_percentage;
+                                        const total = vParcial + util;
+                                        return (
+                                            <tr key={i.id} className="text-[var(--text-primary)] hover:bg-[var(--surface)] transition-colors">
+                                                <td className="py-3">
+                                                    <EditableCellWrapper section="items" id={i.id} field="description" value={i.description} type="text" />
+                                                    <div className="text-xs capitalize text-[var(--text-secondary)]">{i.category?.replace('_', ' ')}</div>
+                                                </td>
+                                                <td className="py-3 text-center">
+                                                    <EditableCellWrapper section="items" id={i.id} field="quantity" value={i.quantity} />
+                                                </td>
+                                                <td className="py-3 text-center">
+                                                    <EditableCellWrapper section="items" id={i.id} field="unit_measure" value={i.unit_measure} type="text" />
+                                                </td>
+                                                <td className="py-3 text-right">
+                                                    <EditableCellWrapper section="items" id={i.id} field="unit_price_cop" value={i.unit_price_cop} fmtFn={fmt} />
+                                                </td>
+                                                <td className="py-3 text-right">
+                                                    <EditableCellWrapper section="items" id={i.id} field="profit_percentage" value={i.profit_percentage} suffix="%" fmtFn={(v: any) => (v * 100).toFixed(0)} />
+                                                </td>
+                                                <td className="py-3 text-right text-[var(--text-secondary)]">{fmt(vParcial)}</td>
+                                                <td className="py-3 text-right text-[var(--text-secondary)]">{fmt(util)}</td>
+                                                <td className="py-3 text-right font-medium text-[var(--solar-gold)]">{fmt(total)}</td>
+                                            </tr>
+                                        )
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <p className="text-sm text-[var(--text-secondary)]">No hay ítems complementarios.</p>
+                    )}
+                </div>
+            </div>
+
+            {/* COLUMNA DERECHA (col-span-1) - Resumen AUI Sticky */}
+            <div className="lg:col-span-1">
+                <div className="lg:sticky lg:top-6 space-y-6">
+                    <div className="glass rounded-2xl border border-[var(--solar-gold)]/20 overflow-hidden">
+                        <div className="bg-[var(--solar-gold)]/10 p-6 border-b border-[var(--solar-gold)]/20">
+                            <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2 mb-1">
+                                <Calculator className="w-5 h-5 text-[var(--solar-gold)]" /> Resumen AUI
+                            </h2>
+                            <p className="text-sm text-[var(--text-secondary)]">Cálculos AUI</p>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div className="space-y-2 text-sm">
+                                <div className="flex justify-between text-[var(--text-secondary)]">
+                                    <span>Subtotal (Costos directos)</span>
+                                    <span>{fmt(totals.subtotal)}</span>
+                                </div>
+                                <div className="flex justify-between text-[var(--text-secondary)]">
+                                    <div className="flex items-center gap-1">
+                                        <span>Gestión Comercial</span>
+                                        <AUIEditableCell section="summary" id="global" field="commercial_management_percentage" value={localData.commercial_management_percentage} suffix="%" fmtFn={(v: any) => (v * 100).toFixed(1)} />
+                                    </div>
+                                    <span>{fmt(totals.commercial_management)}</span>
+                                </div>
+                                <div className="flex justify-between font-semibold text-[var(--text-primary)] py-2 border-y border-[var(--border-ui)]">
+                                    <span>Subtotal 2</span>
+                                    <span>{fmt(totals.subtotal2)}</span>
+                                </div>
+                                <div className="flex justify-between text-[var(--text-secondary)]">
+                                    <div className="flex items-center gap-1">
+                                        <span>Administración</span>
+                                        <AUIEditableCell section="summary" id="global" field="administration_percentage" value={localData.administration_percentage} suffix="%" fmtFn={(v: any) => (v * 100).toFixed(1)} />
+                                    </div>
+                                    <span>{fmt(totals.administration)}</span>
+                                </div>
+                                <div className="flex justify-between text-[var(--text-secondary)]">
+                                    <div className="flex items-center gap-1">
+                                        <span>Imprevistos</span>
+                                        <AUIEditableCell section="summary" id="global" field="contingency_percentage" value={localData.contingency_percentage} suffix="%" fmtFn={(v: any) => (v * 100).toFixed(1)} />
+                                    </div>
+                                    <span>{fmt(totals.contingency)}</span>
+                                </div>
+                                <div className="flex justify-between text-[var(--text-secondary)]">
+                                    <div className="flex items-center gap-1">
+                                        <span>Utilidad</span>
+                                        <AUIEditableCell section="summary" id="global" field="profit_percentage" value={localData.profit_percentage} suffix="%" fmtFn={(v: any) => (v * 100).toFixed(1)} />
+                                    </div>
+                                    <span>{fmt(totals.profit)}</span>
+                                </div>
+                                <div className="flex justify-between text-[var(--text-secondary)]">
+                                    <span>IVA s/ Utilidad ({(localData.iva_profit_percentage * 100).toFixed(1)}%)</span>
+                                    <span>{fmt(totals.profit_iva)}</span>
+                                </div>
+                                <div className="flex justify-between font-semibold text-[var(--text-primary)] py-2 border-y border-[var(--border-ui)]">
+                                    <span>Subtotal 3</span>
+                                    <span>{fmt(totals.subtotal3)}</span>
+                                </div>
+                                <div className="flex justify-between text-[var(--text-secondary)]">
+                                    <div className="flex items-center gap-1">
+                                        <span>Retenciones</span>
+                                        <AUIEditableCell section="summary" id="global" field="withholding_percentage" value={localData.withholding_percentage} suffix="%" fmtFn={(v: any) => (v * 100).toFixed(1)} />
+                                    </div>
+                                    <span>{fmt(totals.withholdings)}</span>
+                                </div>
+                            </div>
+
+                            <div className="mt-6 p-4 bg-[var(--surface)] border border-[var(--solar-gold)]/30 rounded-xl text-center">
+                                <p className="text-sm text-[var(--text-secondary)] mb-1 uppercase tracking-widest font-semibold">Valor Total del Proyecto</p>
+                                <p className="text-3xl font-black text-[var(--solar-gold)]">{fmt(totals.total_value)}</p>
+                                <p className="text-xs text-[var(--text-secondary)] mt-2">Valor por Vatio: <strong className="text-[var(--text-primary)]">{fmt(totals.total_value / (localData.power_kwp * 1000))}</strong> / Wp</p>
+                            </div>
+
+                            <div className="pt-4 flex flex-col gap-2">
+                                <div className="flex justify-between text-xs text-[var(--text-secondary)]">
+                                    <span>Fecha de emisión:</span>
+                                    <span>{quotation.issue_date}</span>
+                                </div>
+                                <div className="flex justify-between text-xs text-[var(--text-secondary)]">
+                                    <span>Válido hasta:</span>
+                                    <span>{quotation.expiration_date}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div className="p-6 space-y-4">
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between text-[var(--text-secondary)]">
-              <span>Subtotal (Costos directos)</span>
-              <span>{fmt(totals.subtotal)}</span>
-            </div>
-            <div className="flex justify-between text-[var(--text-secondary)]">
-              <div className="flex items-center gap-1">
-                <span>Gestión Comercial</span>
-                <EditableCell section="summary" id="global" field="commercial_management_percentage" value={localData.commercial_management_percentage} suffix="%" fmtFn={(v: any) => (v * 100).toFixed(1)} />
-              </div>
-              <span>{fmt(totals.commercial_management)}</span>
-            </div>
-            <div className="flex justify-between font-semibold text-[var(--text-primary)] py-2 border-y border-[var(--border-ui)]">
-              <span>Subtotal 2</span>
-              <span>{fmt(totals.subtotal2)}</span>
-            </div>
-            <div className="flex justify-between text-[var(--text-secondary)]">
-              <div className="flex items-center gap-1">
-                <span>Administración</span>
-                <EditableCell section="summary" id="global" field="administration_percentage" value={localData.administration_percentage} suffix="%" fmtFn={(v: any) => (v * 100).toFixed(1)} />
-              </div>
-              <span>{fmt(totals.administration)}</span>
-            </div>
-            <div className="flex justify-between text-[var(--text-secondary)]">
-              <div className="flex items-center gap-1">
-                <span>Imprevistos</span>
-                <EditableCell section="summary" id="global" field="contingency_percentage" value={localData.contingency_percentage} suffix="%" fmtFn={(v: any) => (v * 100).toFixed(1)} />
-              </div>
-              <span>{fmt(totals.contingency)}</span>
-            </div>
-            <div className="flex justify-between text-[var(--text-secondary)]">
-              <div className="flex items-center gap-1">
-                <span>Utilidad</span>
-                <EditableCell section="summary" id="global" field="profit_percentage" value={localData.profit_percentage} suffix="%" fmtFn={(v: any) => (v * 100).toFixed(1)} />
-              </div>
-              <span>{fmt(totals.profit)}</span>
-            </div>
-            <div className="flex justify-between text-[var(--text-secondary)]">
-              <span>IVA s/ Utilidad ({(localData.iva_profit_percentage * 100).toFixed(1)}%)</span>
-              <span>{fmt(totals.profit_iva)}</span>
-            </div>
-            <div className="flex justify-between font-semibold text-[var(--text-primary)] py-2 border-y border-[var(--border-ui)]">
-              <span>Subtotal 3</span>
-              <span>{fmt(totals.subtotal3)}</span>
-            </div>
-            <div className="flex justify-between text-[var(--text-secondary)]">
-              <div className="flex items-center gap-1">
-                <span>Retenciones</span>
-                <EditableCell section="summary" id="global" field="withholding_percentage" value={localData.withholding_percentage} suffix="%" fmtFn={(v: any) => (v * 100).toFixed(1)} />
-              </div>
-              <span>{fmt(totals.withholdings)}</span>
-            </div>
-          </div>
-
-          <div className="mt-6 p-4 bg-[var(--surface)] border border-[var(--solar-gold)]/30 rounded-xl text-center">
-            <p className="text-sm text-[var(--text-secondary)] mb-1 uppercase tracking-widest font-semibold">Valor Total del Proyecto</p>
-            <p className="text-3xl font-black text-[var(--solar-gold)]">{fmt(totals.total_value)}</p>
-            <p className="text-xs text-[var(--text-secondary)] mt-2">Valor por Vatio: <strong className="text-[var(--text-primary)]">{fmt(totals.total_value / (localData.power_kwp * 1000))}</strong> / Wp</p>
-          </div>
-
-          <div className="pt-4 flex flex-col gap-2">
-            <div className="flex justify-between text-xs text-[var(--text-secondary)]">
-              <span>Fecha de emisión:</span>
-              <span>{quotation.issue_date}</span>
-            </div>
-            <div className="flex justify-between text-xs text-[var(--text-secondary)]">
-              <span>Válido hasta:</span>
-              <span>{quotation.expiration_date}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+    );
 }
