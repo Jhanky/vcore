@@ -1,4 +1,5 @@
-import { Zap, Sun, Cpu, Activity, TrendingUp, Box, Wallet, FileText, Battery } from 'lucide-react';
+import { useState } from 'react';
+import { Zap, Sun, Cpu, Activity, TrendingUp, Box, Wallet, FileText, Battery, X, ExternalLink } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 // Función para formatear valores en COP
@@ -16,6 +17,12 @@ interface TechnicalTabProps {
 }
 
 export default function TechnicalTab({ localData, overdimensioning, specs, catalogPanels, catalogInverters, catalogBatteries }: TechnicalTabProps) {
+    const [techSheetModal, setTechSheetModal] = useState<{
+        open: boolean;
+        product: any;
+        catalogData: any;
+    }>({ open: false, product: null, catalogData: null });
+
     // Multiplicadores de producción mensual para Colombia
     // Meses soleados (Ene, Feb, Dic) tienen mayor irradiación; meses lluviosos (May-Oct) menor
     const monthlyMultipliers = [1.1, 1.05, 0.95, 0.85, 0.75, 0.8, 0.9, 0.95, 0.85, 0.75, 0.9, 1.05];
@@ -179,7 +186,7 @@ export default function TechnicalTab({ localData, overdimensioning, specs, catal
                                 border: '1px solid var(--border-ui)',
                                 borderRadius: '0.5rem',
                             }}
-                            formatter={(value: number) => [`${value.toLocaleString('es-CO')} kWh`, 'Producción']}
+                            formatter={(value) => [`${Number(value).toLocaleString('es-CO')} kWh`, 'Producción']}
                         />
                         <Bar dataKey="production" fill="var(--solar-gold)" radius={[4, 4, 0, 0]} />
                     </BarChart>
@@ -235,8 +242,97 @@ export default function TechnicalTab({ localData, overdimensioning, specs, catal
                                         </>
                                     )}
                                 </div>
+                                {(() => {
+                                    const catalogMap: any = { panel: catalogPanels, inverter: catalogInverters, battery: catalogBatteries };
+                                    const catalogProduct = catalogMap[p.product_type]?.find((c: any) => c.id === p.product_id);
+                                    const hasDatasheet = catalogProduct?.datasheet_url || catalogProduct?.datasheet;
+                                    if (!hasDatasheet) return null;
+                                    return (
+                                        <button
+                                            onClick={() => {
+                                                setTechSheetModal({ open: true, product: p, catalogData: catalogProduct });
+                                            }}
+                                            className="mt-3 w-full px-3 py-1.5 text-xs font-semibold rounded-lg bg-[var(--solar-gold)]/10 text-[var(--solar-gold)] border border-[var(--solar-gold)]/30 hover:bg-[var(--solar-gold)]/20 transition-all"
+                                        >
+                                            <FileText className="w-3 h-3 inline mr-1" />
+                                            Ver Ficha Técnica
+                                        </button>
+                                    );
+                                })()}
                             </div>
                         ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Ficha Técnica */}
+            {techSheetModal.open && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="glass rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto border border-[var(--border-ui)]">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold flex items-center gap-2">
+                                <FileText className="w-5 h-5 text-[var(--solar-gold)]" />
+                                Ficha Técnica
+                            </h3>
+                            <button onClick={() => setTechSheetModal({ open: false, product: null, catalogData: null })}
+                                className="p-1 hover:bg-[var(--surface)] rounded-lg transition-colors">
+                                <X className="w-5 h-5 text-[var(--text-secondary)]" />
+                            </button>
+                        </div>
+
+                        {techSheetModal.catalogData ? (
+                            <div className="space-y-4">
+                                <div className="flex items-start gap-4 border-b border-[var(--border-ui)] pb-4">
+                                    <div>
+                                        <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Marca</p>
+                                        <p className="font-bold text-[var(--text-primary)]">{techSheetModal.catalogData.brand}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Modelo</p>
+                                        <p className="font-bold text-[var(--text-primary)]">{techSheetModal.catalogData.model}</p>
+                                    </div>
+                                    {techSheetModal.catalogData?.datasheet_url || techSheetModal.catalogData?.datasheet ? (
+                                        <div className="ml-auto">
+                                            <a
+                                                href={techSheetModal.catalogData.datasheet_url || techSheetModal.catalogData.datasheet}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 transition-all"
+                                            >
+                                                <FileText className="w-4 h-4" />
+                                                Descargar Ficha PDF
+                                            </a>
+                                        </div>
+                                    ) : techSheetModal.catalogData?.brand && techSheetModal.catalogData?.model ? (
+                                        <div className="ml-auto">
+                                            <a
+                                                href={`https://www.google.com/search?q=${encodeURIComponent(techSheetModal.catalogData.brand + ' ' + techSheetModal.catalogData.model + ' datasheet pdf')}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/30 hover:bg-blue-500/20 transition-all"
+                                            >
+                                                <ExternalLink className="w-4 h-4" />
+                                                Buscar en Google
+                                            </a>
+                                        </div>
+                                    ) : null}
+                                </div>
+
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                    {Object.entries(techSheetModal.catalogData).map(([key, value]) => {
+                                        if (['id', 'created_at', 'updated_at', 'brand', 'model', 'price', 'image_url', 'datasheet_url'].includes(key)) return null;
+                                        return (
+                                            <div key={key} className="bg-[var(--surface)] rounded-lg p-3">
+                                                <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider">{key}</p>
+                                                <p className="text-sm font-semibold text-[var(--text-primary)]">{String(value)}</p>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        ) : (
+                            <p className="text-sm text-[var(--text-secondary)]">No hay información de catálogo disponible para este producto.</p>
+                        )}
                     </div>
                 </div>
             )}
