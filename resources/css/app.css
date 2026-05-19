@@ -1,11 +1,166 @@
-@import 'tailwindcss';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
+:root {
+    /* Paleta de verdes - Energy 4.0 */
+    --verde-oscuro: #548F4B;
+    --verde-medio: #7BBA4E;
+    --lima: #7BBA4E;
+    --lima-claro: #BED641;
+    --fondo-suave: #BED641;
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    /* Aliases para compatibilidad - VERDE como brand principal */
+    --eco-green: var(--verde-medio);
+    --brand-primary: #548F4B;
+    --brand-primary-hover: #476b3e;
+    --brand-accent: #06b6d4;
+
+    /* Solar Gold - Alias para compatibilidad (USA VERDE) */
+    --solar-gold: var(--brand-primary);
+    --solar-gold-hover: var(--brand-primary-hover);
+    --solar-orange: #EA580C;
+    --solar-coral: #F97316;
+    --solar-amber: #FBBF24;
+
+    /* Aliases para compatibilidad */
+    --electric-blue: var(--brand-accent);
+    --power-red: #ef4444;
+
+    /* Dark Mode Defaults (Premium Glassmorphism - Darker) */
+    --bg-main: #000000;
+    --bg-content: #1E2021;
+    --surface: rgba(30, 32, 33, 0.8);
+    --text-primary: #F8FAFC;
+    --text-secondary: #A0AEB8;
+    --border-ui: rgba(255, 255, 255, 0.08);
+}
+
+/* Explicit dark mode (matches :root defaults) */
+.dark {
+    --bg-main: #000000;
+    --bg-content: #1E2021;
+    --surface: rgba(30, 32, 33, 0.8);
+    --text-primary: #F8FAFC;
+    --text-secondary: #A0AEB8;
+    --border-ui: rgba(255, 255, 255, 0.08);
+
+    /* Card industrial backgrounds - dark mode */
+    --card-dark-start: #121713;
+    --card-dark-end: #0D0F0D;
+    --card-dark-border: rgba(255, 255, 255, 0.08);
+}
+
+.light {
+    --bg-main: #F8FAFC;
+    --bg-content: #FFFFFF;
+    --surface: rgba(255, 255, 255, 0.9);
+    --text-primary: #0F172A;
+    --text-secondary: #475569;
+    --border-ui: rgba(15, 23, 42, 0.1);
+
+    /* Card industrial backgrounds - light mode */
+    --card-dark-start: #FFFFFF;
+    --card-dark-end: #F8FAFC;
+    --card-dark-border: rgba(15, 23, 42, 0.08);
+    --lima-claro: #548F4B;
+    --verde-medio: #7BBA4E;
+}
+
+body {
+    @apply antialiased font-sans transition-colors duration-500;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+}
+
+h1, h2, h3, h4, .font-display {
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: -0.02em;
+}
+
+/* Industrial Card - Premium Gradient Background - Verde Energy */
+.card-industrial {
+    background: linear-gradient(135deg, var(--card-dark-start, #1a2520) 0%, var(--card-dark-end, #121a17) 100%);
+    border: 1px solid var(--card-dark-border, rgba(42, 58, 48, 0.5));
+    @apply rounded-2xl shadow-xl shadow-black/20;
+}
+
+.light .card-industrial {
+    background: linear-gradient(135deg, var(--card-dark-start) 0%, var(--card-dark-end) 100%);
+    border: 1px solid var(--card-dark-border);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+/* Glassmorphism - Adapts to theme */
+.glass {
+    background: var(--surface);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-ui);
+    @apply shadow-xl;
+}
+
+.dark .glass {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* Solar accent bar */
+.solar-bar {
+    @apply h-1 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 rounded-full;
+}
+
+/* ENERGY 4.0 - Paleta de Verdes */
+.bg-verde-oscuro { background-color: var(--verde-oscuro); }
+.bg-verde-medio { background-color: var(--verde-medio); }
+.bg-lima { background-color: var(--lima); }
+.bg-lima-claro { background-color: var(--lima-claro); }
+.bg-fondo-suave { background-color: var(--fondo-suave); }
+
+.text-verde-oscuro { color: var(--verde-oscuro); }
+.text-verde-medio { color: var(--verde-medio); }
+.text-lima { color: var(--lima); }
+.text-lima-claro { color: var(--lima-claro); }
+
+.border-verde-oscuro { border-color: var(--verde-oscuro); }
+.border-verde-medio { border-color: var(--verde-medio); }
+.border-lima { border-color: var(--lima); }
+.border-lima-claro { border-color: var(--lima-claro); }
+
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-up {
+    animation: slideUp 0.3s ease-out forwards;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--border-ui);
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--brand-primary);
 }
