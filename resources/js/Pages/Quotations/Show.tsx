@@ -540,11 +540,20 @@ export default function Show({ quotation, allowedStatuses, isStatusLocked, catal
                 {activeTab === 'financial' && (
                     <FinancialTab
                         localData={localData}
-                        totals={totals}
+                        setLocalData={setLocalData}
+                        editingInfo={editingInfo}
+                        setEditingInfo={setEditingInfo}
                         editingCell={editingCell}
                         setEditingCell={setEditingCell}
                         handleChange={handleChange}
+                        openProductModal={openProductModal}
+                        openAddProductModal={openAddProductModal}
+                        catalogPanels={catalogPanels}
+                        catalogInverters={catalogInverters}
+                        catalogBatteries={catalogBatteries}
                         quotation={quotation}
+                        overdimensioning={overdimensioning}
+                        totals={totals}
                     />
                 )}
                 {activeTab === 'technical' && (
