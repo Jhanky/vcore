@@ -1,4 +1,4 @@
-import { Zap, Sun, Cpu, Activity, TrendingUp, Box, Wallet } from 'lucide-react';
+import { Zap, Sun, Cpu, Activity, TrendingUp, Box, Wallet, FileText, Battery } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 // Función para formatear valores en COP
@@ -10,9 +10,12 @@ interface TechnicalTabProps {
     localData: any;
     overdimensioning: any;
     specs: any;
+    catalogPanels?: any[];
+    catalogInverters?: any[];
+    catalogBatteries?: any[];
 }
 
-export default function TechnicalTab({ localData, overdimensioning, specs }: TechnicalTabProps) {
+export default function TechnicalTab({ localData, overdimensioning, specs, catalogPanels, catalogInverters, catalogBatteries }: TechnicalTabProps) {
     // Multiplicadores de producción mensual para Colombia
     // Meses soleados (Ene, Feb, Dic) tienen mayor irradiación; meses lluviosos (May-Oct) menor
     const monthlyMultipliers = [1.1, 1.05, 0.95, 0.85, 0.75, 0.8, 0.9, 0.95, 0.85, 0.75, 0.9, 1.05];
@@ -182,6 +185,61 @@ export default function TechnicalTab({ localData, overdimensioning, specs }: Tec
                     </BarChart>
                 </ResponsiveContainer>
             </div>
+
+            {/* Datos Técnicos de Productos */}
+            {localData?.products?.length > 0 && (
+                <div className="glass rounded-2xl p-6 space-y-4">
+                    <h3 className="font-bold flex items-center gap-2 text-[var(--text-primary)]">
+                        <FileText className="w-5 h-5 text-[var(--solar-gold)]" />
+                        Datos Técnicos de Productos
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {localData.products.map((p: any) => (
+                            <div key={p.id} className="bg-[var(--surface)] border border-[var(--border-ui)] rounded-xl p-4 space-y-2">
+                                <div className="flex items-center gap-2 border-b border-[var(--border-ui)] pb-2">
+                                    {p.product_type === 'panel' && <Sun className="w-4 h-4 text-amber-400" />}
+                                    {p.product_type === 'inverter' && <Cpu className="w-4 h-4 text-blue-400" />}
+                                    {p.product_type === 'battery' && <Battery className="w-4 h-4 text-emerald-400" />}
+                                    <span className="text-xs font-semibold uppercase">{p.product_type}</span>
+                                </div>
+                                <p className="font-bold text-[var(--text-primary)]">{p.snapshot_brand}</p>
+                                <p className="text-sm text-[var(--text-secondary)]">{p.snapshot_model}</p>
+                                <div className="pt-2 space-y-1 text-xs">
+                                    {p.product_type === 'panel' && (
+                                        <>
+                                            <div className="flex justify-between"><span>Potencia:</span><span className="font-semibold">{p.snapshot_specs?.power}W</span></div>
+                                            {p.snapshot_specs?.efficiency && <div className="flex justify-between"><span>Eficiencia:</span><span className="font-semibold">{p.snapshot_specs.efficiency}%</span></div>}
+                                            {p.snapshot_specs?.dimensions && <div className="flex justify-between"><span>Dimensiones:</span><span className="font-semibold">{p.snapshot_specs.dimensions}</span></div>}
+                                            {p.snapshot_specs?.weight && <div className="flex justify-between"><span>Peso:</span><span className="font-semibold">{p.snapshot_specs.weight}</span></div>}
+                                            {p.snapshot_specs?.cell_type && <div className="flex justify-between"><span>Tipo celda:</span><span className="font-semibold">{p.snapshot_specs.cell_type}</span></div>}
+                                            {p.snapshot_specs?.warranty && <div className="flex justify-between"><span>Garantía:</span><span className="font-semibold">{p.snapshot_specs.warranty}</span></div>}
+                                        </>
+                                    )}
+                                    {p.product_type === 'inverter' && (
+                                        <>
+                                            <div className="flex justify-between"><span>Potencia:</span><span className="font-semibold">{p.snapshot_specs?.power}kW</span></div>
+                                            {p.snapshot_specs?.efficiency && <div className="flex justify-between"><span>Eficiencia:</span><span className="font-semibold">{p.snapshot_specs.efficiency}%</span></div>}
+                                            {p.snapshot_specs?.grid_type && <div className="flex justify-between"><span>Tipo red:</span><span className="font-semibold">{p.snapshot_specs.grid_type}</span></div>}
+                                            {p.snapshot_specs?.system_type && <div className="flex justify-between"><span>Sistema:</span><span className="font-semibold">{p.snapshot_specs.system_type}</span></div>}
+                                            {p.snapshot_specs?.warranty && <div className="flex justify-between"><span>Garantía:</span><span className="font-semibold">{p.snapshot_specs.warranty}</span></div>}
+                                        </>
+                                    )}
+                                    {p.product_type === 'battery' && (
+                                        <>
+                                            <div className="flex justify-between"><span>Capacidad:</span><span className="font-semibold">{p.snapshot_specs?.capacity}Ah</span></div>
+                                            {p.snapshot_specs?.voltage && <div className="flex justify-between"><span>Voltaje:</span><span className="font-semibold">{p.snapshot_specs.voltage}V</span></div>}
+                                            {p.snapshot_specs?.chemistry && <div className="flex justify-between"><span>Tipo:</span><span className="font-semibold">{p.snapshot_specs.chemistry}</span></div>}
+                                            {p.snapshot_specs?.life_cycles && <div className="flex justify-between"><span>Ciclos:</span><span className="font-semibold">{p.snapshot_specs.life_cycles}</span></div>}
+                                            {p.snapshot_specs?.warranty && <div className="flex justify-between"><span>Garantía:</span><span className="font-semibold">{p.snapshot_specs.warranty}</span></div>}
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

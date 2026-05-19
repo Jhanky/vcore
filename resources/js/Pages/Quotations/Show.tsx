@@ -561,6 +561,9 @@ export default function Show({ quotation, allowedStatuses, isStatusLocked, catal
                         localData={localData}
                         overdimensioning={overdimensioning}
                         specs={specs}
+                        catalogPanels={catalogPanels}
+                        catalogInverters={catalogInverters}
+                        catalogBatteries={catalogBatteries}
                     />
                 )}
                 {activeTab === 'states' && (
