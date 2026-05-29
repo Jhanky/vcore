@@ -273,7 +273,7 @@ export default function Settings() {
                                         className="h-28 w-28 rounded-2xl object-cover shadow-[0_0_20px_rgba(251,191,36,0.2)]"
                                     />
                                 ) : (
-                                    <div className="h-28 w-28 rounded-2xl bg-brand-600 flex items-center justify-center text-white text-4xl font-bold shadow-[0_0_20px_rgba(59,130,246,0.3)]">
+                                    <div className="h-28 w-28 rounded-2xl bg-[var(--solar-gold)] flex items-center justify-center text-slate-900 text-4xl font-bold shadow-[0_0_20px_rgba(84,143,75,0.3)]">
                                         {auth?.user?.name?.charAt(0) ?? 'U'}
                                     </div>
                                 )}

@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p \"C:/Users/abc/.claude/plugins/cache/claude-plugins-official/skill-creator/unknown/skills/skill-creator/laravel-react-inertia-solar-expert-workspace/evals\")",
+      "Bash(mkdir -p \"C:/Users/abc/Documents/Desarrollos/Energy/Vcore/.claude/skills/laravel-react-inertia-solar-expert\")",
+      "Bash(mkdir -p \"C:/Users/abc/Documents/Desarrollos/Energy/Vcore/.claude/skills/laravel-react-inertia-solar-expert-workspace/iteration-1/eval-0/with_skill/outputs\" \"C:/Users/abc/Documents/Desarrollos/Energy/Vcore/.claude/skills/laravel-react-inertia-solar-expert-workspace/iteration-1/eval-0/without_skill/outputs\" \"C:/Users/abc/Documents/Desarrollos/Energy/Vcore/.claude/skills/laravel-react-inertia-solar-expert-workspace/iteration-1/eval-1/with_skill/outputs\" \"C:/Users/abc/Documents/Desarrollos/Energy/Vcore/.claude/skills/laravel-react-inertia-solar-expert-workspace/iteration-1/eval-1/without_skill/outputs\" \"C:/Users/abc/Documents/Desarrollos/Energy/Vcore/.claude/skills/laravel-react-inertia-solar-expert-workspace/iteration-1/eval-2/with_skill/outputs\" \"C:/Users/abc/Documents/Desarrollos/Energy/Vcore/.claude/skills/laravel-react-inertia-solar-expert-workspace/iteration-1/eval-2/without_skill/outputs\")",
+      "Bash(rm -rf \"C:/Users/abc/Documents/Desarrollos/Energy/Vcore/.claude/skills/laravel-react-inertia-solar-expert-workspace\")",
+      "Bash(npx tsc *)",
+      "Bash(npm list *)",
+      "Bash(npm install *)",
+      "Bash(pnpm install *)",
+      "Bash(pnpm approve-builds *)",
+      "Bash(pnpm run *)",
+      "Bash(npx skillfish *)",
+      "Bash(npx -y react-doctor@latest . --verbose --diff)",
+      "Bash(pnpm add *)",
+      "Bash(git checkout *)",
+      "Skill(laravel-react-inertia-solar-expert)",
+      "Skill(laravel-react-inertia-solar-expert:*)",
+      "Bash(php artisan *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(npm run *)",
+      "Bash(npx eslint *)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\abc\\.claude\\plugins\\cache\\claude-plugins-official\\skill-creator\\unknown\\skills\\skill-creator\\laravel-react-inertia-solar-expert-workspace",
+      "C:\\Users\\abc\\Documents\\Desarrollos\\Energy\\Vcore\\.claude\\skills",
+      "C:\\Users\\abc\\Documents\\Desarrollos\\Energy\\Vcore\\.claude\\skills\\laravel-react-inertia-solar-expert-workspace\\iteration-1\\eval-0\\with_skill",
+      "C:\\Users\\abc\\Documents\\Desarrollos\\Energy\\Vcore\\.claude\\skills\\laravel-react-inertia-solar-expert-workspace"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "vcore",
+    "laravel-boost"
+  ]
+}

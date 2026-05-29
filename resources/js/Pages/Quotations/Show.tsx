@@ -164,7 +164,7 @@ export default function Show({ quotation, allowedStatuses, isStatusLocked, catal
                             const newNetworkType = id === 'network_type' ? value : prev.network_type;
                             const matchSystem = !inv.system_type ||
                                 inv.system_type === newSystemType ||
-                                inv.system_type === 'Híbrido';
+                                (newSystemType === 'Híbrido' && inv.system_type === 'Híbrido');
                             const matchGrid = !inv.grid_type || inv.grid_type === newNetworkType;
                             return matchSystem && matchGrid;
                         });
@@ -217,6 +217,19 @@ export default function Show({ quotation, allowedStatuses, isStatusLocked, catal
 
         // Si es un producto nuevo (agregar)
         if (productModal.isNew) {
+            // Validar límite de inversores
+            if (productModal.productType === 'inverter') {
+                const uniqueInverters = new Set(
+                    localData.products
+                        .filter((p: any) => p.product_type === 'inverter')
+                        .map((p: any) => p.product_id)
+                );
+
+                if (uniqueInverters.size >= 2 && !uniqueInverters.has(newProductId)) {
+                    showToast('Se recomienda no usar más de 2 inversores diferentes en un mismo sistema.', 'warning');
+                }
+            }
+
             const newId = `temp_${Date.now()}`;
             let quantity = 1;
             if (productModal.productType === 'panel') {
@@ -605,7 +618,7 @@ export default function Show({ quotation, allowedStatuses, isStatusLocked, catal
                                     catalog = catalogInverters?.filter((inv: any) => {
                                         const matchSystem = !inv.system_type ||
                                             inv.system_type === localData.system_type ||
-                                            inv.system_type === 'Híbrido';
+                                            (localData.system_type === 'Híbrido' && inv.system_type === 'Híbrido');
                                         const matchGrid = !inv.grid_type ||
                                             inv.grid_type === localData.network_type;
                                         return matchSystem && matchGrid;

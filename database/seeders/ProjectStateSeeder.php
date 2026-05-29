@@ -1,0 +1,162 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\ProjectState;
+use Illuminate\Database\Seeder;
+
+class ProjectStateSeeder extends Seeder
+{
+    public function run(): void
+    {
+        $states = [
+            [
+                'name' => 'Borrador',
+                'slug' => 'borrador',
+                'code' => 'BORRADOR',
+                'color' => '#94a3b8',
+                'icon' => 'FileText',
+                'phase' => 'commercial',
+                'display_order' => 1,
+                'estimated_duration' => 3,
+                'is_final' => false,
+                'requires_approval' => false,
+                'description' => 'Proyecto en estado inicial, recopilando información básica',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Solicitud de Factibilidad',
+                'slug' => 'solicitud_factibilidad',
+                'code' => 'SOL_FACTIBILIDAD',
+                'color' => '#60a5fa',
+                'icon' => 'Send',
+                'phase' => 'commercial',
+                'display_order' => 2,
+                'estimated_duration' => 7,
+                'is_final' => false,
+                'requires_approval' => false,
+                'description' => 'Solicitud de estudio de factibilidad técnica presentada',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Factibilidad Aprobada',
+                'slug' => 'factibilidad_aprobada',
+                'code' => 'FACT_APROBADA',
+                'color' => '#84cc16',
+                'icon' => 'CheckCircle',
+                'phase' => 'technical',
+                'display_order' => 3,
+                'estimated_duration' => 1,
+                'is_final' => false,
+                'requires_approval' => true,
+                'description' => 'Estudio de factibilidad aprobado, proyecto viable técnicamente',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Diseño Eléctrico',
+                'slug' => 'diseno_electrico',
+                'code' => 'DISEÑO_ELECTRICO',
+                'color' => '#f59e0b',
+                'icon' => 'Settings',
+                'phase' => 'technical',
+                'display_order' => 4,
+                'estimated_duration' => 14,
+                'is_final' => false,
+                'requires_approval' => false,
+                'description' => 'Desarrollo del diseño eléctrico e ingeniería del sistema',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Diseño Conforme',
+                'slug' => 'diseno_conforme',
+                'code' => 'DISEÑO_CONFORME',
+                'color' => '#8b5cf6',
+                'icon' => 'Award',
+                'phase' => 'technical',
+                'display_order' => 5,
+                'estimated_duration' => 2,
+                'is_final' => false,
+                'requires_approval' => true,
+                'description' => 'Diseño técnico aprobado y conforme a normativas',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Construcción',
+                'slug' => 'construccion',
+                'code' => 'CONSTRUCCION',
+                'color' => '#3b82f6',
+                'icon' => 'Hammer',
+                'phase' => 'technical',
+                'display_order' => 6,
+                'estimated_duration' => 21,
+                'is_final' => false,
+                'requires_approval' => false,
+                'description' => 'Ejecución de obra civil e instalación de equipos',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Obra Terminada',
+                'slug' => 'obra_terminada',
+                'code' => 'OBRA_TERMINADA',
+                'color' => '#06b6d4',
+                'icon' => 'CheckSquare',
+                'phase' => 'technical',
+                'display_order' => 7,
+                'estimated_duration' => 1,
+                'is_final' => false,
+                'requires_approval' => false,
+                'description' => 'Instalación física completada, lista para pruebas',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Conexión Aprobada',
+                'slug' => 'conexion_aprobada',
+                'code' => 'CONEXION_APROBADA',
+                'color' => '#14b8a6',
+                'icon' => 'Zap',
+                'phase' => 'legal',
+                'display_order' => 8,
+                'estimated_duration' => 5,
+                'is_final' => false,
+                'requires_approval' => true,
+                'description' => 'Aprobación regulatoria para conexión a red eléctrica',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Energizado',
+                'slug' => 'energizado',
+                'code' => 'ENERGIZADO',
+                'color' => '#22c55e',
+                'icon' => 'Power',
+                'phase' => 'completed',
+                'display_order' => 9,
+                'estimated_duration' => 1,
+                'is_final' => false,
+                'requires_approval' => false,
+                'description' => 'Sistema conectado a red y energizado',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Operación en Red',
+                'slug' => 'operacion_red',
+                'code' => 'OPERACION_RED',
+                'color' => '#16a34a',
+                'icon' => 'Activity',
+                'phase' => 'completed',
+                'display_order' => 10,
+                'estimated_duration' => null,
+                'is_final' => true,
+                'requires_approval' => false,
+                'description' => 'Proyecto en operación comercial generando energía',
+                'is_active' => true,
+            ],
+        ];
+
+        foreach ($states as $state) {
+            ProjectState::updateOrCreate(
+                ['code' => $state['code']],
+                $state
+            );
+        }
+    }
+}
