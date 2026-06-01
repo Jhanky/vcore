@@ -44,7 +44,6 @@ class HandleInertiaRequests extends Middleware
                         ? Storage::url($user->profile_photo_path)
                         : null,
                     'roles' => $user->getRoleNames()->toArray(),
-                    'permissions' => $user->getAllPermissions()->pluck('name')->toArray(),
                 ] : null,
             ],
             'session' => [

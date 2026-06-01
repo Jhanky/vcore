@@ -108,6 +108,11 @@ class Project extends Model
         return $this->hasMany(Milestone::class)->orderBy('planned_date');
     }
 
+    public function equipment(): HasMany
+    {
+        return $this->hasMany(ProjectEquipment::class);
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

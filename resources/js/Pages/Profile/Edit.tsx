@@ -5,6 +5,7 @@ import { Head, usePage } from '@inertiajs/react';
 import DeleteUserForm from './Partials/DeleteUserForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
+import { cn } from '@/utils/cn';
 import { Camera, User as UserIcon, X } from 'lucide-react';
 import { useState } from 'react';
 
@@ -37,19 +38,19 @@ export default function Edit({
                                     src={profilePhotoUrl}
                                     alt={auth.user.name}
                                     onClick={() => setShowPhotoModal(true)}
-                                    className="h-32 w-32 rounded-3xl object-cover shadow-[0_0_30px_rgba(251,191,36,0.3)] transition-transform duration-500 group-hover/avatar:scale-105 cursor-pointer"
+                                    className="h-32 w-32 rounded-2xl object-cover shadow-[0_0_30px_rgba(251,191,36,0.3)] transition-transform duration-500 group-hover/avatar:scale-105 cursor-pointer"
                                 />
                             ) : (
                                 <div
                                     onClick={() => setShowPhotoModal(true)}
-                                    className="h-32 w-32 rounded-3xl bg-[var(--solar-gold)] flex items-center justify-center text-slate-900 text-5xl font-bold shadow-[0_0_30px_rgba(251,191,36,0.3)] transition-transform duration-500 group-hover/avatar:scale-105 cursor-pointer"
+                                    className="h-32 w-32 rounded-2xl bg-[var(--solar-gold)] flex items-center justify-center text-slate-900 text-5xl font-bold shadow-[0_0_30px_rgba(251,191,36,0.3)] transition-transform duration-500 group-hover/avatar:scale-105 cursor-pointer"
                                 >
                                     {auth.user.name.charAt(0)}
                                 </div>
                             )}
                             <button
                                 onClick={() => setShowPhotoModal(true)}
-                                className="absolute -bottom-2 -right-2 p-3 bg-[var(--bg-content)] rounded-xl border border-[var(--border-ui)] text-[var(--solar-gold)] hover:bg-slate-700 hover:text-white transition-all shadow-xl"
+                                className="absolute -bottom-2 -right-2 p-3 bg-[var(--bg-content)] rounded-full border border-[var(--border-ui)] text-[var(--solar-gold)] hover:bg-slate-700 hover:text-white transition-all shadow-xl"
                             >
                                 <Camera className="h-5 w-5" />
                             </button>
@@ -102,7 +103,7 @@ export default function Edit({
                                 className="w-full max-h-[80vh] object-contain rounded-lg"
                             />
                         ) : (
-                            <div className="h-64 w-64 mx-auto rounded-3xl bg-[var(--solar-gold)] flex items-center justify-center text-slate-900 text-8xl font-bold">
+                            <div className="h-64 w-64 mx-auto rounded-2xl bg-[var(--solar-gold)] flex items-center justify-center text-slate-900 text-8xl font-bold">
                                 {auth.user.name.charAt(0)}
                             </div>
                         )}

@@ -71,7 +71,7 @@ export default function Toast() {
     }, [removeToast]);
 
     return (
-        <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-3">
+        <div className="fixed bottom-4 right-4 left-4 sm:bottom-6 sm:right-6 sm:left-auto z-[100] flex flex-col gap-3">
             {toasts.map((toast) => {
                 const Icon = icons[toast.type];
                 return (

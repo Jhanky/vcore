@@ -8,6 +8,7 @@ use App\Models\MilestoneType;
 use App\Models\Project;
 use App\Models\ProjectDocument;
 use App\Models\ProjectFieldValue;
+use App\Models\ProjectEquipment;
 use App\Models\ProjectNote;
 use App\Models\ProjectState;
 use App\Models\ProjectStateField;
@@ -76,6 +77,7 @@ class ProjectService
         return Project::with([
             'client',
             'quotation',
+            'quotation.products',
             'currentState',
             'projectManager',
             'technicalLeader',
@@ -90,6 +92,8 @@ class ProjectService
             'costCenter',
             'milestones.milestoneType',
             'milestones.responsible',
+            'equipment.supplier',
+            'equipment.serials',
         ])->find($id);
     }
 
@@ -135,6 +139,20 @@ class ProjectService
                 ProjectTechnicalSpecs::create([
                     'project_id' => $project->id,
                     'panel_count' => $quotation->panel_count,
+                ]);
+            }
+
+            $quotation->load('products');
+            foreach ($quotation->products as $product) {
+                ProjectEquipment::create([
+                    'project_id' => $project->id,
+                    'product_type' => $product->product_type,
+                    'product_id' => $product->product_id,
+                    'quotation_product_id' => $product->id,
+                    'brand' => $product->snapshot_brand,
+                    'model' => $product->snapshot_model,
+                    'specs' => $product->snapshot_specs,
+                    'quantity' => $product->quantity,
                 ]);
             }
 
@@ -196,22 +214,19 @@ class ProjectService
 
     public function update(Project $project, array $data): Project
     {
-        $project->update(array_filter([
-            'name' => $data['name'] ?? null,
-            'description' => $data['description'] ?? null,
-            'installation_address' => $data['installation_address'] ?? null,
-            'coordinates' => $data['coordinates'] ?? null,
-            'start_date' => $data['start_date'] ?? null,
-            'estimated_end_date' => $data['estimated_end_date'] ?? null,
-            'actual_end_date' => $data['actual_end_date'] ?? null,
-            'contracted_value_cop' => $data['contracted_value_cop'] ?? null,
-            'total_cost_cop' => $data['total_cost_cop'] ?? null,
-            'project_manager_id' => $data['project_manager_id'] ?? null,
-            'technical_leader_id' => $data['technical_leader_id'] ?? null,
-            'priority' => $data['priority'] ?? null,
-            'notes' => $data['notes'] ?? null,
-            'is_active' => isset($data['is_active']) ? ($data['is_active'] === true || $data['is_active'] === 'true') : null,
-        ], fn ($v) => $v !== null));
+        $fillable = [];
+
+        foreach (['name', 'description', 'installation_address', 'coordinates', 'start_date', 'estimated_end_date', 'actual_end_date', 'contracted_value_cop', 'total_cost_cop', 'project_manager_id', 'technical_leader_id', 'priority', 'notes'] as $field) {
+            if (array_key_exists($field, $data)) {
+                $fillable[$field] = $data[$field];
+            }
+        }
+
+        if (array_key_exists('is_active', $data)) {
+            $fillable['is_active'] = $data['is_active'] === true || $data['is_active'] === 'true';
+        }
+
+        $project->update($fillable);
 
         return $project->fresh();
     }
@@ -382,7 +397,7 @@ class ProjectService
 
         $total = (clone $baseQuery)->count();
         $active = (clone $baseQuery)->active()->count();
-        $completed = (clone $baseQuery)->whereHas('currentState', fn ($q) => $q->where('code', 'completed'))->count();
+        $completed = (clone $baseQuery)->whereHas('currentState', fn ($q) => $q->where('phase', 'completed'))->count();
         $cancelled = (clone $baseQuery)->whereHas('currentState', fn ($q) => $q->where('code', 'cancelled'))->count();
 
         $byState = ProjectState::withCount(['projects' => function ($q) use ($forUser) {

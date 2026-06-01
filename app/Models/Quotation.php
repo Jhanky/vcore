@@ -37,6 +37,7 @@ class Quotation extends Model
         'subtotal3',
         'withholdings',
         'total_value',
+        'design_image',
         'issue_date',
         'expiration_date',
     ];

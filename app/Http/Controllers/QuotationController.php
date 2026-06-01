@@ -17,6 +17,8 @@ use App\Services\QuotationSuggestionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Laravel\Ai\Ai;
 use Spatie\Browsershot\Browsershot;
@@ -83,16 +85,25 @@ class QuotationController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $user = auth()->user();
-        $clientQuery = Client::select('id', 'name', 'email', 'energy_consumption_kwh');
+        $clientQuery = Client::select('id', 'name', 'email', 'energy_consumption_kwh', 'energy_tariff', 'monthly_bill_amount', 'city', 'state');
         if (! $user->isAdminOrGerente()) {
             $clientQuery->where('user_id', $user->id);
         }
 
+        $selectedClient = null;
+        if ($request->filled('client_id')) {
+            $client = Client::find($request->client_id);
+            if ($client && ($user->isAdminOrGerente() || $client->user_id === $user->id)) {
+                $selectedClient = $client->only(['id', 'name', 'email', 'energy_consumption_kwh', 'energy_tariff', 'monthly_bill_amount', 'city', 'state']);
+            }
+        }
+
         return Inertia::render('Quotations/Form', [
             'clients' => $clientQuery->get(),
+            'preselectedClient' => $selectedClient,
             'panels' => Panel::select('id', 'brand', 'model', 'power', 'price')->get(),
             'inverters' => Inverter::select('id', 'brand', 'model', 'power', 'price', 'system_type', 'grid_type')->get(),
             'batteries' => Battery::select('id', 'brand', 'model', 'capacity', 'voltage', 'price')->get(),
@@ -228,6 +239,11 @@ class QuotationController extends Controller
     public function update(Request $request, Quotation $quotation, QuotationService $quotationService)
     {
         $this->authorizeQuotationAccess($quotation);
+
+        if ($quotation->isStatusLocked()) {
+            return back()->withErrors(['error' => 'No se puede editar una cotización en estado "'.$quotation->status.'".']);
+        }
+
         $request->validate([
             'project_name' => 'required|string|max:255',
             'power_kwp' => 'required|numeric|min:0.1',
@@ -340,6 +356,16 @@ class QuotationController extends Controller
             ]);
         }
 
+        // Solo administradores o gerentes pueden aprobar cotizaciones
+        if ($to === 'Aprobada' && ! auth()->user()->isAdminOrGerente()) {
+            $errorMsg = 'Solo administradores o gerentes pueden aprobar cotizaciones.';
+            session()->put('error', $errorMsg);
+
+            return back()->withErrors([
+                'status' => $errorMsg,
+            ]);
+        }
+
         $quotation->update(['status' => $to]);
 
         QuotationStatusHistory::create([
@@ -372,20 +398,57 @@ class QuotationController extends Controller
         $data = $proposalService->buildProposalData($quotation);
         $html = view('pdf.proposal', $data)->render();
 
-        $pdfContent = Browsershot::html($html)
-            ->setNodeBinary('node')
-            ->setNpmBinary('npm')
-            ->format('Letter')
-            ->margins(0, 0, 0, 0)
-            ->showBackground()
-            ->waitUntilNetworkIdle()
-            ->pdf();
+        try {
+            $pdfContent = Browsershot::html($html)
+                ->setNodeBinary('node')
+                ->setNpmBinary('npm')
+                ->format('Letter')
+                ->margins(0, 0, 0, 0)
+                ->showBackground()
+                ->waitUntilNetworkIdle()
+                ->pdf();
+        } catch (\Exception $e) {
+            Log::error('Error generando PDF propuesta: '.$e->getMessage(), [
+                'quotation_id' => $quotation->id,
+            ]);
 
-        $filename = 'PROPUESTA_FV_'.number_format($data['panelKwp'], 2, '_', '').'kWp_'.str_replace(' ', '_', strtoupper($quotation->project_name)).'.pdf';
+            return back()->withErrors(['error' => 'Error al generar el PDF. Intente nuevamente o contacte al administrador.']);
+        }
+
+        $safeName = preg_replace('/[^\w\s-]/', '', str_replace(' ', '_', strtoupper($quotation->project_name)));
+        $filename = 'PROPUESTA_FV_'.number_format($data['panelKwp'], 2, '_', '').'kWp_'.$safeName.'.pdf';
 
         return response($pdfContent)
             ->header('Content-Type', 'application/pdf')
             ->header('Content-Disposition', 'attachment; filename="'.$filename.'"');
+    }
+
+    /**
+     * Upload a design image for the quotation PDF.
+     */
+    public function uploadDesignImage(Request $request, Quotation $quotation)
+    {
+        $this->authorizeQuotationAccess($quotation);
+
+        if ($quotation->isStatusLocked()) {
+            return response()->json(['error' => 'No se puede modificar una cotización en estado "'.$quotation->status.'".'], 403);
+        }
+
+        $validated = $request->validate([
+            'design_image' => 'required|image|mimes:png,jpg,jpeg,webp|max:5120',
+        ]);
+
+        if ($quotation->design_image) {
+            Storage::disk('public')->delete($quotation->design_image);
+        }
+
+        $path = $request->file('design_image')->store('quotations/designs', 'public');
+        $quotation->update(['design_image' => $path]);
+
+        return response()->json([
+            'success' => true,
+            'path' => $path,
+        ]);
     }
 
     /**
@@ -394,6 +457,11 @@ class QuotationController extends Controller
     public function destroy(Quotation $quotation)
     {
         $this->authorizeQuotationAccess($quotation);
+
+        if ($quotation->isStatusLocked()) {
+            return back()->withErrors(['error' => 'No se puede eliminar una cotización en estado "'.$quotation->status.'".']);
+        }
+
         $quotation->products()->delete();
         $quotation->items()->delete();
         $quotation->delete();

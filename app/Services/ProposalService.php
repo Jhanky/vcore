@@ -134,6 +134,17 @@ class ProposalService
             'description' => 'Cumplimiento normativo, certificación e inspección eléctrica según RETIE vigente.',
         ];
 
+        // ── Design image (for page 6) ───────────────────────
+        $designImage = '';
+        if ($quotation->design_image) {
+            $fullPath = storage_path('app/public/'.$quotation->design_image);
+            if (file_exists($fullPath)) {
+                $imageData = file_get_contents($fullPath);
+                $mime = mime_content_type($fullPath);
+                $designImage = 'data:'.$mime.';base64,'.base64_encode($imageData);
+            }
+        }
+
         // ── Reference code for header ───────────────────────
         $refCode = 'FV-'.number_format($panelKwp, 2).'kWp-'.date('Y', strtotime($quotation->issue_date ?? now()));
 
@@ -153,6 +164,7 @@ class ProposalService
             'inverters' => $inverters,
             'batteries' => $batteries,
             'panelCount' => $quotation->panel_count ?: array_sum(array_column($panels, 'quantity')),
+            'designImage' => $designImage,
         ];
     }
 

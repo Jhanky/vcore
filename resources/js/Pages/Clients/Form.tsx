@@ -20,7 +20,7 @@ import NumberInput from '@/Components/NumberInput';
 import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { showToast } from '@/Components/Toast';
-import RegistrationModal from '@/Components/RegistrationModal';
+import RegistrationModal from '@/features/clients/components/RegistrationModal';
 import { useState, useEffect, useRef } from 'react';
 
 interface Contact {

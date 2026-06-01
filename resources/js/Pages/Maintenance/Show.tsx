@@ -11,6 +11,7 @@ import {
 interface Props {
     maintenance: any;
     canManage: boolean;
+    canCreate: boolean;
     isAssigned: boolean;
 }
 
@@ -28,7 +29,7 @@ const PRIORITY_COLORS: Record<string, string> = {
     baja: 'text-green-400 bg-green-500/10',
 };
 
-export default function MaintenanceShow({ maintenance, canManage, isAssigned }: Props) {
+export default function MaintenanceShow({ maintenance, canManage, canCreate, isAssigned }: Props) {
     const handleStart = () => {
         router.patch(route('maintenances.start', maintenance.id), {}, {
             onSuccess: () => showToast('Mantenimiento iniciado.', 'success'),

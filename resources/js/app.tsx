@@ -12,7 +12,7 @@ const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 function ThemeAwareToaster() {
     const [theme, setTheme] = useState<'dark' | 'light'>(() => {
         const saved = localStorage.getItem('theme');
-        return saved === 'dark' || saved === 'light' ? saved : 'dark';
+        return saved === 'dark' || saved === 'light' ? saved : 'light';
     });
 
     useEffect(() => {

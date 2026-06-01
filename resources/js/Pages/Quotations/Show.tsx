@@ -1,19 +1,25 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { showToast } from '@/Components/Toast';
 import { useState, useMemo, useRef, useEffect } from 'react';
-import FinancialTab from '@/Components/Quotations/FinancialTab';
-import TechnicalTab from '@/Components/Quotations/TechnicalTab';
-import StatesTab from '@/Components/Quotations/StatesTab';
-import { Calculator, Cpu, Clock, ArrowLeft, Download, Save, RotateCcw, ChevronDown, Lock, Sun, RefreshCw, X } from 'lucide-react';
+import FinancialTab from '@/features/quotations/components/FinancialTab';
+import TechnicalTab from '@/features/quotations/components/TechnicalTab';
+import StatesTab from '@/features/quotations/components/StatesTab';
+import { Calculator, Cpu, Clock, ArrowLeft, Download, Save, RotateCcw, ChevronDown, Lock, Sun, RefreshCw, X, AlertCircle, Pencil } from 'lucide-react';
+import ConfirmModal from '@/Components/ConfirmModal';
+import Modal from '@/Components/Modal';
+import { formatCurrencySimple } from '@/utils/format';
 
 const STATUSES = ['Borrador','Enviada','Aprobada','Rechazada','Vencida'] as const;
 
 function fmt(v: number) {
-    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v || 0);
+    return formatCurrencySimple(v);
 }
 
 export default function Show({ quotation, allowedStatuses, isStatusLocked, catalogPanels, catalogInverters, catalogBatteries }: any) {
+    const { auth } = usePage().props as any;
+    const isAdminOrGerente = auth?.user?.roles?.some((r: string) => r === 'admin' || r === 'gerente');
+    const visibleStatuses = allowedStatuses.filter((s: string) => isAdminOrGerente || s !== 'Aprobada');
     const [localData, setLocalData] = useState({
         ...quotation,
         products: [...(quotation.products || [])],
@@ -34,6 +40,11 @@ export default function Show({ quotation, allowedStatuses, isStatusLocked, catal
     const [statusMenuOpen, setStatusMenuOpen] = useState(false);
     const [statusNotes, setStatusNotes] = useState('');
     const [processing, setProcessing] = useState(false);
+    const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+    const [showDesignModal, setShowDesignModal] = useState(false);
+    const [designFile, setDesignFile] = useState<File | null>(null);
+    const [uploadingDesign, setUploadingDesign] = useState(false);
+    const [hasDesignImage, setHasDesignImage] = useState(!!quotation.design_image);
     const statusRef = useRef<HTMLDivElement>(null);
 
     const [activeTab, setActiveTab] = useState<'financial' | 'technical' | 'states'>('financial');
@@ -103,6 +114,7 @@ export default function Show({ quotation, allowedStatuses, isStatusLocked, catal
     };
 
     const handleChange = (section: string, id: number | string, field: string, value: any) => {
+        if (isStatusLocked) return;
         setHasChanges(true);
         if (section === 'products') {
             setLocalData((prev: any) => ({
@@ -204,7 +216,7 @@ export default function Show({ quotation, allowedStatuses, isStatusLocked, catal
 
     // Cambiar producto seleccionado o agregar nuevo
     const handleProductChange = (newProductId: number) => {
-        if (!productModal.productType) return;
+        if (!productModal.productType || isStatusLocked) return;
 
         const catalogs: any = {
             panel: catalogPanels,
@@ -328,11 +340,57 @@ export default function Show({ quotation, allowedStatuses, isStatusLocked, catal
         });
     };
 
-    const handleDiscard = () => {
+    const confirmDiscard = () => {
+        setShowDiscardConfirm(false);
         setLocalData({ ...quotation, products: [...(quotation.products || [])], items: [...(quotation.items || [])] });
         setHasChanges(false);
         setEditingCell(null);
         setEditingInfo(false);
+        showToast('Cambios descartados.', 'info');
+    };
+
+    const handleDownloadPdf = () => {
+        if (hasDesignImage) {
+            window.open(`${route('quotations.pdf', quotation.id)}?t=${new Date().getTime()}`, '_blank');
+        } else {
+            setShowDesignModal(true);
+        }
+    };
+
+    const handleDownloadWithoutDesign = () => {
+        setShowDesignModal(false);
+        setDesignFile(null);
+        window.open(`${route('quotations.pdf', quotation.id)}?t=${new Date().getTime()}`, '_blank');
+    };
+
+    const handleUploadAndDownload = async () => {
+        if (!designFile) return;
+
+        setUploadingDesign(true);
+        const formData = new FormData();
+        formData.append('design_image', designFile);
+
+        try {
+            const response = await fetch(route('quotations.design-image', quotation.id), {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content },
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message || 'Error al subir la imagen');
+            }
+
+            setHasDesignImage(true);
+            setShowDesignModal(false);
+            setDesignFile(null);
+            window.open(`${route('quotations.pdf', quotation.id)}?t=${new Date().getTime()}`, '_blank');
+        } catch (e: any) {
+            showToast(e.message || 'Error al subir la imagen', 'error');
+        } finally {
+            setUploadingDesign(false);
+        }
     };
 
     const EditableCell = ({ value, section, id, field, type = "number", suffix = "", prefix = "", fmtFn = (v: any) => v }: any) => {
@@ -480,7 +538,8 @@ export default function Show({ quotation, allowedStatuses, isStatusLocked, catal
                                             />
                                         </div>
                                         {/* Allowed transitions */}
-                                        {allowedStatuses.length > 0 ? allowedStatuses.map((s: string) => (
+                                        {visibleStatuses.length > 0 ? (
+                                            visibleStatuses.map((s: string) => (
                                             <button
                                                 key={s}
                                                 onClick={() => handleStatusChange(s)}
@@ -505,40 +564,46 @@ export default function Show({ quotation, allowedStatuses, isStatusLocked, catal
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    {hasChanges ? (
+                    <button
+                        onClick={handleDownloadPdf}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                            hasChanges
+                                ? 'bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20'
+                                : 'bg-[var(--surface)] border border-[var(--border-ui)] text-[var(--text-primary)] hover:border-[var(--solar-gold)]/40'
+                        }`}
+                        title={hasChanges ? 'Guarda los cambios antes de generar el PDF' : 'Descargar propuesta en PDF'}
+                    >
+                        <Download className="w-4 h-4" /> Propuesta PDF
+                    </button>
+                    {hasChanges && !isStatusLocked && (
                         <>
-                            <button onClick={handleDiscard} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-500/10 text-slate-400 border border-slate-500/20 hover:bg-slate-500/20 transition-all text-sm font-semibold">
+                            <button onClick={() => setShowDiscardConfirm(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-500/10 text-slate-400 border border-slate-500/20 hover:bg-slate-500/20 transition-all text-sm font-semibold">
                                 <RotateCcw className="w-4 h-4" /> Descartar
                             </button>
                             <button onClick={handleSave} disabled={processing} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 text-white font-semibold hover:brightness-110 transition-all text-sm shadow-lg shadow-emerald-500/20">
                                 <Save className="w-4 h-4" /> {processing ? 'Guardando...' : 'Guardar Cambios'}
                             </button>
                         </>
-                    ) : (
-                        <a
-                            href={`${route('quotations.pdf', quotation.id)}?t=${new Date().getTime()}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--surface)] border border-[var(--border-ui)] text-[var(--text-primary)] hover:border-[var(--solar-gold)]/40 transition-all text-sm font-semibold"
-                        >
-                            <Download className="w-4 h-4" /> Propuesta PDF
-                        </a>
+                    )}
+                    {isStatusLocked && (
+                        <span className="text-xs text-[var(--text-secondary)] italic">Cotización bloqueada — no se puede editar</span>
                     )}
                 </div>
             </div>
 
             {/* Navegación de tabs */}
-            <nav className="-mb-px flex space-x-4 mb-6">
+            <div className="glass rounded-2xl p-1.5 mb-6 overflow-x-auto hide-scrollbar">
+                <div className="flex gap-1">
                 {tabs.map((tab) => {
                     const Icon = tab.icon;
                     return (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`inline-flex items-center gap-2 px-4 py-2.5 border-b-2 text-sm font-semibold rounded-t-lg transition-all ${
+                            className={`inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl transition-all ${
                                 activeTab === tab.id
-                                    ? 'border-[var(--solar-gold)] text-[var(--solar-gold)] bg-[var(--solar-gold)]/5'
-                                    : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface)]'
+                                    ? 'bg-[var(--solar-gold)] text-slate-900 shadow-lg shadow-[var(--solar-gold)]/20'
+                                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface)]'
                             }`}
                         >
                             <Icon className="w-4 h-4" />
@@ -546,7 +611,8 @@ export default function Show({ quotation, allowedStatuses, isStatusLocked, catal
                         </button>
                     );
                 })}
-            </nav>
+                </div>
+            </div>
 
             {/* Contenido según tab */}
             <div className="min-h-[400px]">
@@ -567,6 +633,7 @@ export default function Show({ quotation, allowedStatuses, isStatusLocked, catal
                         quotation={quotation}
                         overdimensioning={overdimensioning}
                         totals={totals}
+                        isStatusLocked={isStatusLocked}
                     />
                 )}
                 {activeTab === 'technical' && (
@@ -603,18 +670,34 @@ export default function Show({ quotation, allowedStatuses, isStatusLocked, catal
                         </div>
 
                         {productModal.productType === 'inverter' && (
-                            <p className="text-xs text-[var(--text-secondary)] mb-3 pb-2 border-b border-[var(--border-ui)]">
-                                Mostrando inversores compatibles con: <strong className="text-[var(--text-primary)]">{localData.system_type}</strong> / <strong className="text-[var(--text-primary)]">{localData.network_type}</strong>
-                            </p>
+                            !localData.system_type || !localData.network_type ? (
+                                <div className="flex items-center gap-2 text-amber-400 text-sm mb-3 pb-3 border-b border-[var(--border-ui)]">
+                                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                                    <span>Define primero <strong>Tipo de Sistema</strong> y <strong>Tipo de Red</strong> en Información General para ver inversores compatibles.</span>
+                                </div>
+                            ) : (
+                                <p className="text-xs text-[var(--text-secondary)] mb-3 pb-2 border-b border-[var(--border-ui)]">
+                                    Mostrando inversores compatibles con: <strong className="text-[var(--text-primary)]">{localData.system_type}</strong> / <strong className="text-[var(--text-primary)]">{localData.network_type}</strong>
+                                </p>
+                            )
                         )}
 
                         <div className="flex-1 overflow-y-auto space-y-2">
                             {(() => {
+                                if (productModal.productType === 'inverter' && (!localData.system_type || !localData.network_type)) {
+                                    return (
+                                        <div className="flex flex-col items-center justify-center py-12 text-center">
+                                            <Cpu className="w-12 h-12 text-[var(--text-secondary)]/30 mb-3" />
+                                            <p className="text-sm text-[var(--text-secondary)]">Selecciona Tipo de Sistema y Tipo de Red</p>
+                                            <p className="text-xs text-[var(--text-secondary)]/60 mt-1">para ver los inversores disponibles</p>
+                                        </div>
+                                    );
+                                }
+
                                 let catalog;
                                 if (productModal.productType === 'panel') {
                                     catalog = catalogPanels;
                                 } else if (productModal.productType === 'inverter') {
-                                    // Filtrar inversores por system_type y grid_type
                                     catalog = catalogInverters?.filter((inv: any) => {
                                         const matchSystem = !inv.system_type ||
                                             inv.system_type === localData.system_type ||
@@ -656,6 +739,65 @@ export default function Show({ quotation, allowedStatuses, isStatusLocked, catal
                     </div>
                 </div>
             )}
+            {/* Modal para subir diseño fotovoltaico */}
+            <Modal show={showDesignModal} onClose={() => { setShowDesignModal(false); setDesignFile(null); }} maxWidth="sm">
+                <div className="p-4 sm:p-6 bg-[var(--surface)] text-[var(--text-primary)]">
+                    <h2 className="text-lg font-bold mb-2">Diseño fotovoltaico</h2>
+                    <p className="text-sm text-[var(--text-secondary)] mb-4">
+                        Sube una imagen del diseño preliminar para incluirla en la propuesta.
+                    </p>
+
+                    <label className="block mb-4 relative cursor-pointer">
+                        <div className="flex items-center justify-center border-2 border-dashed border-[var(--border-ui)] rounded-xl p-6 hover:border-[var(--solar-gold)]/50 transition-colors pointer-events-none">
+                            {designFile ? (
+                                <div className="text-center">
+                                    <p className="text-sm font-medium text-[var(--solar-gold)]">{designFile.name}</p>
+                                    <p className="text-xs text-[var(--text-secondary)] mt-1">{(designFile.size / 1024).toFixed(0)} KB</p>
+                                </div>
+                            ) : (
+                                <div className="text-center">
+                                    <p className="text-sm font-medium">Seleccionar imagen</p>
+                                    <p className="text-xs text-[var(--text-secondary)] mt-1">PNG, JPG o WEBP · Máx 5 MB</p>
+                                </div>
+                            )}
+                        </div>
+                        <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp"
+                            onChange={(e) => setDesignFile(e.target.files?.[0] || null)}
+                            className="absolute inset-0 opacity-0 cursor-pointer"
+                        />
+                    </label>
+
+                    <div className="flex gap-3">
+                        <button
+                            onClick={handleDownloadWithoutDesign}
+                            className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold border border-[var(--border-ui)] text-[var(--text-secondary)] hover:bg-[var(--border-ui)] transition-all"
+                        >
+                            Descargar sin diseño
+                        </button>
+                        <button
+                            onClick={handleUploadAndDownload}
+                            disabled={!designFile || uploadingDesign}
+                            className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold bg-[var(--solar-gold)] text-white hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {uploadingDesign ? 'Subiendo...' : 'Subir y descargar'}
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Confirmación para descartar cambios */}
+            <ConfirmModal
+                show={showDiscardConfirm}
+                onClose={() => setShowDiscardConfirm(false)}
+                onConfirm={confirmDiscard}
+                title="Descartar cambios"
+                message="Se perderán todos los cambios no guardados en esta cotización."
+                confirmLabel="Descartar"
+                cancelLabel="Cancelar"
+                variant="warning"
+            />
         </AuthenticatedLayout>
     );
 }

@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             ProjectStateSeeder::class,
             RequiredDocumentSeeder::class,
             ProjectStateFieldSeeder::class,
+            SupplierSeeder::class,
         ]);
     }
 }

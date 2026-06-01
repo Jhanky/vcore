@@ -66,7 +66,7 @@ export default function MaintenanceForm({ maintenance, technicians, projects, on
     };
 
     return (
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
             <h2 className="text-xl font-bold font-outfit text-[var(--text-primary)] mb-6">
                 {isEditing ? 'Editar Mantenimiento' : 'Nuevo Mantenimiento'}
             </h2>

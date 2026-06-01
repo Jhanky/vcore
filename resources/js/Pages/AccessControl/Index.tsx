@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, router, usePage } from '@inertiajs/react';
 import { useState, useCallback, useMemo } from 'react';
-import { Plus, Trash2, Edit, Users, Shield, RefreshCw, Eye, EyeOff, Check, X, Camera, Image as ImageIcon, UserX } from 'lucide-react';
+import { Plus, Edit, Users, Shield, RefreshCw, Eye, EyeOff, Check, X, Camera, Image as ImageIcon, UserX } from 'lucide-react';
 import { DataTable, Column } from '@/Components/DataTable';
 import ConfirmModal from '@/Components/ConfirmModal';
 import Modal from '@/Components/Modal';
@@ -11,13 +11,13 @@ import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import { showToast } from '@/Components/Toast';
+import { cn } from '@/utils/cn';
 
 type Tab = 'users' | 'roles';
 
 export default function AccessControlIndex({
     users,
     roles,
-    permissions,
     allRoles
 }: any) {
     const { auth } = usePage<any>().props;
@@ -185,6 +185,7 @@ export default function AccessControlIndex({
         {
             key: 'email',
             label: 'Email',
+            hideOnMobile: true,
             render: (u) => <span className="text-[var(--text-secondary)]">{u.email}</span>,
         },
         {
@@ -226,15 +227,11 @@ export default function AccessControlIndex({
 
     const roleForm = useForm({
         name: '',
-        permissions: [] as string[],
     });
 
     const openRoleModal = (role: any) => {
-        if (!role) return; // No permitir crear nuevos roles desde UI
-        roleForm.setData({
-            name: role.name,
-            permissions: role.permissions.map((p: any) => p.name),
-        });
+        if (!role) return;
+        roleForm.setData({ name: role.name });
         setRoleModal({ show: true, role });
     };
 
@@ -278,15 +275,6 @@ export default function AccessControlIndex({
         }
     };
 
-    const togglePermission = (permName: string) => {
-        const has = roleForm.data.permissions.includes(permName);
-        if (has) {
-            roleForm.setData('permissions', roleForm.data.permissions.filter((p: string) => p !== permName));
-        } else {
-            roleForm.setData('permissions', [...roleForm.data.permissions, permName]);
-        }
-    };
-
     return (
         <AuthenticatedLayout header="Control de Acceso">
             <Head title="Control de Acceso" />
@@ -313,7 +301,7 @@ export default function AccessControlIndex({
                     }`}
                 >
                     <Shield className="h-4 w-4" />
-                    Roles y Permisos
+                    Roles
                 </button>
             </div>
 
@@ -366,14 +354,13 @@ export default function AccessControlIndex({
                             key={r.id}
                             className="glass rounded-[2rem] p-6 border border-[var(--border-ui)]/30 hover:border-[var(--solar-gold)]/30 transition-all group"
                         >
-                            <div className="flex items-start justify-between mb-4">
+                                <div className="flex items-start justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-xl bg-[var(--solar-gold)]/10 flex items-center justify-center">
                                         <Shield className="h-5 w-5 text-[var(--solar-gold)]" />
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-[var(--text-primary)] capitalize">{r.name}</h3>
-                                        <p className="text-xs text-[var(--text-secondary)]">{r.permissions.length} permisos</p>
+                                        <h3 className="font-bold text-[var(--text-primary)] capitalize font-outfit">{r.name}</h3>
                                     </div>
                                 </div>
                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -386,19 +373,6 @@ export default function AccessControlIndex({
                                     </button>
                                 </div>
                             </div>
-                            <div className="flex flex-wrap gap-1.5">
-                                {r.permissions.map((p: any) => (
-                                    <span
-                                        key={p.id}
-                                        className="px-2.5 py-1 bg-slate-500/10 text-[var(--text-secondary)] rounded-lg text-xs border border-[var(--border-ui)]/50"
-                                    >
-                                        {p.name}
-                                    </span>
-                                ))}
-                                {r.permissions.length === 0 && (
-                                    <span className="text-slate-500 text-xs">Sin permisos asignados</span>
-                                )}
-                            </div>
                         </div>
                     ))}
                 </div>
@@ -406,7 +380,7 @@ export default function AccessControlIndex({
 
             {/* USER MODAL */}
             <Modal show={userModal.show} onClose={() => !userForm.processing && setUserModal({ show: false, user: null })} maxWidth="2xl">
-                <div className="p-6 bg-[var(--surface)] text-[var(--text-primary)]">
+                <div className="p-4 sm:p-6 bg-[var(--surface)] text-[var(--text-primary)]">
                     <h2 className="text-xl font-bold font-outfit mb-6 text-[var(--solar-gold)]">
                         {userModal.user ? 'Editar Usuario' : 'Nuevo Usuario'}
                     </h2>
@@ -414,7 +388,7 @@ export default function AccessControlIndex({
                         {/* Foto de Perfil */}
                         <div className="mb-6 flex flex-col items-center">
                             <div className="relative">
-                                <div className="w-24 h-24 rounded-full bg-slate-500/10 border-2 border-dashed border-[var(--border-ui)] overflow-hidden flex items-center justify-center">
+                                <div className="w-24 h-24 rounded-full bg-[var(--surface)] border-2 border-dashed border-[var(--border-ui)] overflow-hidden flex items-center justify-center">
                                     {photoPreview ? (
                                         <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
                                     ) : (
@@ -439,7 +413,7 @@ export default function AccessControlIndex({
                             )}
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <InputLabel htmlFor="name" value="Nombre *" />
                                 <TextInput
@@ -492,17 +466,17 @@ export default function AccessControlIndex({
                                     required={!userModal.user}
                                 />
                                 <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1 mt-1">
-                                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="p-1.5 rounded-lg hover:bg-slate-500/20 text-[var(--text-secondary)]" title={showPassword ? 'Ocultar' : 'Mostrar'}>
+                                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="p-1.5 rounded-xl hover:bg-slate-500/20 text-[var(--text-secondary)]" title={showPassword ? 'Ocultar' : 'Mostrar'}>
                                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                     </button>
-                                    <button type="button" onClick={generateSecurePassword} className="p-1.5 rounded-lg hover:bg-slate-500/20 text-[var(--text-secondary)]" title="Generar contraseña segura">
+                                    <button type="button" onClick={generateSecurePassword} className="p-1.5 rounded-xl hover:bg-slate-500/20 text-[var(--text-secondary)]" title="Generar contraseña segura">
                                         <RefreshCw className="h-4 w-4" />
                                     </button>
                                 </div>
                             </div>
                             <InputError message={userForm.errors.password} className="mt-2" />
                             {!userModal.user && userForm.data.password && (
-                                <div className="mt-2 p-3 rounded-xl bg-slate-500/5 border border-[var(--border-ui)]">
+                                <div className="mt-2 p-3 rounded-xl bg-[var(--surface)] border border-[var(--border-ui)]">
                                     <p className="text-xs font-bold text-[var(--text-secondary)] mb-2">Requisitos de contraseña:</p>
                                     <div className="grid grid-cols-2 gap-1 text-xs">
                                         <div className="flex items-center gap-1">
@@ -541,7 +515,7 @@ export default function AccessControlIndex({
                                     onChange={(e) => userForm.setData('password_confirmation', e.target.value)}
                                     required={!userModal.user && userForm.data.password.length > 0}
                                 />
-                                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-slate-500/20 text-[var(--text-secondary)]" title={showConfirmPassword ? 'Ocultar' : 'Mostrar'}>
+                                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-xl hover:bg-slate-500/20 text-[var(--text-secondary)]" title={showConfirmPassword ? 'Ocultar' : 'Mostrar'}>
                                     {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                 </button>
                             </div>
@@ -588,13 +562,13 @@ export default function AccessControlIndex({
 
             {/* ROLE MODAL */}
             <Modal show={roleModal.show} onClose={() => { if (!roleForm.processing) setRoleModal({ show: false, role: null }); }} maxWidth="2xl">
-                <div className="p-6 bg-[var(--surface)] text-[var(--text-primary)]">
+                <div className="p-4 sm:p-6 bg-[var(--surface)] text-[var(--text-primary)]">
                     <h3 className="text-xl font-bold font-outfit mb-6">
                         {roleModal.role ? 'Editar Rol' : 'Nuevo Rol'}
                     </h3>
                     <form onSubmit={submitRole}>
                         <div className="mb-4">
-                            <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">Nombre del Rol</label>
+                            <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2 font-outfit">Nombre del Rol</label>
                             <input
                                 type="text"
                                 value={roleForm.data.name}
@@ -606,25 +580,8 @@ export default function AccessControlIndex({
                             {roleForm.errors.name && <p className="text-red-400 text-xs mt-1">{roleForm.errors.name}</p>}
                         </div>
 
-                        <div className="mb-6">
-                            <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">Permisos</label>
-                            <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-                                {permissions.map((p: any) => (
-                                    <label key={p.id} className="flex items-center gap-2 text-sm p-2 bg-slate-500/5 rounded-lg border border-[var(--border-ui)] cursor-pointer hover:border-[var(--solar-gold)]/50">
-                                        <input
-                                            type="checkbox"
-                                            checked={roleForm.data.permissions.includes(p.name)}
-                                            onChange={() => togglePermission(p.name)}
-                                            className="rounded bg-[var(--surface)] border-[var(--border-ui)] text-[var(--solar-gold)] focus:ring-[var(--solar-gold)]"
-                                        />
-                                        <span className="text-[var(--text-primary)] capitalize">{p.name}</span>
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
-
                         <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-ui)]/50">
-                            <button type="button" onClick={() => setRoleModal({ show: false, role: null })} className="px-5 py-2.5 rounded-xl font-bold bg-slate-500/10 text-[var(--text-primary)] hover:bg-slate-500/20">
+                            <button type="button" onClick={() => setRoleModal({ show: false, role: null })} className="px-5 py-2.5 rounded-xl font-bold bg-[var(--surface)] text-[var(--text-primary)] hover:bg-slate-500/20">
                                 Cancelar
                             </button>
                             <button type="submit" disabled={roleForm.processing} className="px-5 py-2.5 rounded-xl font-bold bg-[var(--solar-gold)] text-slate-900 hover:brightness-110 disabled:opacity-50">

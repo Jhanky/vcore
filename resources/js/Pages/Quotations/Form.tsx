@@ -1,10 +1,11 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import SystemAnalysisPanel from '@/Components/SystemAnalysisPanel';
-import SavingsEstimator from '@/Components/SavingsEstimator';
+import SystemAnalysisPanel from '@/features/quotations/components/SystemAnalysisPanel';
+import SavingsEstimator from '@/features/quotations/components/SavingsEstimator';
 import { Head, useForm, router } from '@inertiajs/react';
 import { showToast } from '@/Components/Toast';
+import { formatCurrencySimple } from '@/utils/format';
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Plus, Trash2, Save, Sun, Cpu, Battery, Wrench, Calculator, AlertCircle, FileText, Settings } from 'lucide-react';
+import { Plus, Trash2, Save, Sun, Cpu, Battery, Wrench, Calculator, AlertCircle, FileText, Settings, Search, Check, ChevronDown } from 'lucide-react';
 
 interface Product { id: number; brand: string; model: string; power?: number; capacity?: number; voltage?: number; price: number; system_type?: string; grid_type?: string; }
 interface QuotationProduct { product_type: 'panel'|'inverter'|'battery'; product_id: string; quantity: number; unit_price_cop: number; profit_percentage: number; }
@@ -19,7 +20,7 @@ const ITEM_CATEGORY_LABELS: Record<string, string> = {
 const UNITS = ['und','kW','m','global','panel','trámite'];
 
 function fmt(v: number) {
-    return new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',minimumFractionDigits:0}).format(v||0);
+    return formatCurrencySimple(v);
 }
 function round2(n: number) { return Math.round((n + Number.EPSILON) * 100) / 100; }
 
@@ -50,13 +51,14 @@ function defaultItems(powerKwp: number, panelCount: number): QuotationItem[] {
     ];
 }
 
-export default function Form({ clients, panels, inverters, batteries, system_types }: any) {
+export default function Form({ clients, panels, inverters, batteries, system_types, preselectedClient = null }: any) {
     const [step, setStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [clientSearch, setClientSearch] = useState('');
     const [showClientDropdown, setShowClientDropdown] = useState(false);
     const [itemsUserModified, setItemsUserModified] = useState(false);
     const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+    const [preselectedHighlight, setPreselectedHighlight] = useState(false);
 
     const { data, setData, processing, errors } = useForm({
         client_id: '',
@@ -189,6 +191,15 @@ export default function Form({ clients, panels, inverters, batteries, system_typ
     }, [data.power_kwp, data.panel_qty, itemsUserModified]);
 
     useEffect(() => {
+        if (preselectedClient) {
+            setData('client_id', String(preselectedClient.id));
+            setClientSearch(preselectedClient.name);
+            setPreselectedHighlight(true);
+            setTimeout(() => setPreselectedHighlight(false), 2000);
+        }
+    }, []);
+
+    useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
             const target = e.target as Element;
             if (!target.closest('.client-search-dropdown')) {
@@ -245,7 +256,8 @@ export default function Form({ clients, panels, inverters, batteries, system_typ
     }, [data, buildProducts, isSubmitting]);
 
     const inputCls = "w-full px-4 py-2.5 bg-[var(--surface)] border border-[var(--border-ui)] rounded-xl text-[var(--text-primary)] focus:border-[var(--solar-gold)] focus:ring focus:ring-[var(--solar-gold)]/20 transition-all text-sm [&>option]:bg-[var(--bg-content)]";
-    const labelCls = "block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1";
+    const searchInputCls = "w-full pl-10 pr-10 py-2.5 bg-[var(--surface)] border border-[var(--border-ui)] rounded-xl text-[var(--text-primary)] focus:border-[var(--solar-gold)] focus:ring focus:ring-[var(--solar-gold)]/20 transition-all text-sm";
+    const labelCls = "block text-xs font-semibold text-[var(--text-secondary)] font-outfit uppercase tracking-wider mb-1";
 
     return (
         <AuthenticatedLayout header="Nueva Cotización">
@@ -323,12 +335,13 @@ export default function Form({ clients, panels, inverters, batteries, system_typ
 
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 {/* Buscador de cliente */}
-                                <div className="lg:col-span-2">
+                                <div className="lg:col-span-2 relative">
                                     <label className={labelCls}>Cliente *</label>
                                     <div className="relative">
+                                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-secondary)] pointer-events-none" />
                                         <input
                                             type="text"
-                                            className={inputCls}
+                                            className={`${searchInputCls} ${preselectedHighlight ? 'border-[var(--solar-gold)] ring-[var(--solar-gold)]/30' : ''}`}
                                             value={clientSearch}
                                             onChange={e => {
                                                 setClientSearch(e.target.value);
@@ -338,33 +351,40 @@ export default function Form({ clients, panels, inverters, batteries, system_typ
                                             onFocus={() => setShowClientDropdown(true)}
                                             placeholder="Buscar por nombre, email o documento..."
                                         />
-                                        <input type="hidden" value={data.client_id} onChange={e => setData('client_id', e.target.value)} />
+                                        {data.client_id && (
+                                            <Check className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-400 pointer-events-none" />
+                                        )}
                                     </div>
                                     {showClientDropdown && (
-                                        <ul className="client-search-dropdown absolute z-50 w-full mt-1 bg-[var(--bg-primary)]/95 backdrop-blur-md border border-[var(--border-ui)] rounded-xl shadow-2xl max-h-60 overflow-y-auto">
+                                        <ul className="client-search-dropdown absolute z-50 w-full mt-1 bg-[var(--bg-content)] backdrop-blur-md border border-[var(--border-ui)] rounded-xl shadow-2xl max-h-60 overflow-y-auto custom-scrollbar">
                                             {filteredClients.length === 0 ? (
                                                 <li className="px-4 py-3 text-sm text-[var(--text-secondary)]">No se encontraron clientes</li>
                                             ) : (
-                                                filteredClients.map((c: any) => (
-                                                    <li key={c.id}>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setData('client_id', String(c.id));
-                                                                setClientSearch(c.name);
-                                                                setShowClientDropdown(false);
-                                                            }}
-                                                            className={`w-full text-left px-4 py-3 text-sm hover:bg-[var(--solar-gold)]/10 transition-all border-b border-[var(--border-ui)] last:border-0 ${data.client_id === String(c.id) ? 'bg-[var(--solar-gold)]/20' : ''}`}
-                                                        >
-                                                            <span className="font-semibold text-[var(--text-primary)]">{c.name}</span>
-                                                            <span className="ml-2 text-xs text-[var(--text-secondary)]">
-                                                                {c.email && <span>{c.email}</span>}
-                                                                {c.document_number && <span> · {c.document_number}</span>}
-                                                                {c.energy_consumption_kwh && <span> · {c.energy_consumption_kwh} kWh/mes</span>}
-                                                            </span>
-                                                        </button>
+                                                <>
+                                                    {filteredClients.map((c: any) => (
+                                                        <li key={c.id}>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setData('client_id', String(c.id));
+                                                                    setClientSearch(c.name);
+                                                                    setShowClientDropdown(false);
+                                                                }}
+                                                                className={`w-full text-left px-4 py-3 text-sm hover:bg-[var(--solar-gold)]/10 transition-all border-b border-[var(--border-ui)] last:border-0 ${data.client_id === String(c.id) ? 'bg-[var(--solar-gold)]/20' : ''}`}
+                                                            >
+                                                                <span className="font-semibold text-[var(--text-primary)]">{c.name}</span>
+                                                                <span className="ml-2 text-xs text-[var(--text-secondary)]">
+                                                                    {c.email && <span>{c.email}</span>}
+                                                                    {c.document_number && <span> · {c.document_number}</span>}
+                                                                    {c.energy_consumption_kwh && <span> · {c.energy_consumption_kwh} kWh/mes</span>}
+                                                                </span>
+                                                            </button>
+                                                        </li>
+                                                    ))}
+                                                    <li className="px-4 py-2 text-xs text-[var(--text-secondary)]/60 border-t border-[var(--border-ui)] text-center">
+                                                        {filteredClients.length} cliente{filteredClients.length !== 1 ? 's' : ''} encontrado{filteredClients.length !== 1 ? 's' : ''}
                                                     </li>
-                                                ))
+                                                </>
                                             )}
                                         </ul>
                                     )}
@@ -373,7 +393,7 @@ export default function Form({ clients, panels, inverters, batteries, system_typ
                                         const suggested = Math.round((kwh / (4.5 * 30)) * 10) / 10;
                                         const coverage = ((suggested * 4.5 * 30) / kwh * 100).toFixed(0);
                                         return (
-                                            <div className="mt-2 flex items-center gap-3 bg-[var(--solar-gold)]/8 border border-[var(--solar-gold)]/20 rounded-xl px-3 py-2">
+                                            <div className="mt-2 flex items-center gap-3 bg-[var(--solar-gold)]/8 border border-[var(--solar-gold)]/20 rounded-xl px-3 py-2 animate-slide-up">
                                                 <span className="text-xs text-[var(--text-secondary)]">
                                                     Consumo: <strong className="text-[var(--solar-gold)]">{kwh} kWh/mes</strong>
                                                     <span className="mx-2">·</span>
@@ -506,7 +526,12 @@ export default function Form({ clients, panels, inverters, batteries, system_typ
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className={labelCls}>Modelo</label>
-                                        <select className={inputCls} value={data.inverter_id} onChange={e => onInverterSelect(e.target.value)}>
+                                        <select
+                                            className={`${inputCls} ${(!data.system_type || !data.network_type) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            value={data.inverter_id}
+                                            onChange={e => onInverterSelect(e.target.value)}
+                                            disabled={!data.system_type || !data.network_type}
+                                        >
                                             <option value="">Seleccionar inversor…</option>
                                             {inverters
                                                 .filter((inv: any) =>
@@ -518,8 +543,13 @@ export default function Form({ clients, panels, inverters, batteries, system_typ
                                                 ))
                                             }
                                         </select>
-                                        {data.system_type && inverters.filter((inv: any) => (!data.system_type || !inv.system_type || inv.system_type === data.system_type) && (!data.network_type || !inv.grid_type || inv.grid_type === data.network_type)).length === 0 && (
-                                            <p className="text-amber-400 text-xs mt-1">No hay inversores para esta configuración</p>
+                                        {!data.system_type || !data.network_type ? (
+                                            <p className="text-amber-400 text-xs mt-1 flex items-center gap-1">
+                                                <AlertCircle className="h-3 w-3" />
+                                                Selecciona primero Tipo de Sistema y Tipo de Red
+                                            </p>
+                                        ) : inverters.filter((inv: any) => (!data.system_type || !inv.system_type || inv.system_type === data.system_type) && (!data.network_type || !inv.grid_type || inv.grid_type === data.network_type)).length === 0 && (
+                                            <p className="text-amber-400 text-xs mt-1">No hay inversores compatibles con esta configuración</p>
                                         )}
                                     </div>
                                     <div>

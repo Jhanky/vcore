@@ -10,6 +10,7 @@ export interface Column<T> {
     sortable?: boolean;
     render?: (item: T) => ReactNode;
     className?: string;
+    hideOnMobile?: boolean;
 }
 
 export interface FilterOption {
@@ -141,7 +142,8 @@ export function DataTable<T extends { id: number | string }>({
         return (
             <div className="space-y-4">
                 <div className="h-14 w-full bg-[var(--surface)] rounded-2xl animate-pulse" />
-                <div className="glass rounded-[2rem] overflow-hidden">
+                {/* Desktop skeleton */}
+                <div className="hidden md:block glass rounded-[2rem] overflow-hidden">
                     <div className="divide-y divide-[var(--border-ui)]/30">
                         {[...Array(5)].map((_, i) => (
                             <div key={i} className="p-6 flex gap-4">
@@ -151,6 +153,26 @@ export function DataTable<T extends { id: number | string }>({
                             </div>
                         ))}
                     </div>
+                </div>
+                {/* Mobile skeleton */}
+                <div className="md:hidden space-y-3">
+                    {[...Array(3)].map((_, i) => (
+                        <div key={i} className="glass rounded-2xl p-4 border border-[var(--border-ui)]/30 space-y-3">
+                            <div className="flex items-start gap-3">
+                                <div className="h-10 w-10 rounded-2xl bg-slate-500/20 animate-pulse shrink-0" />
+                                <div className="flex-1 space-y-2">
+                                    <div className="h-5 w-32 bg-slate-500/20 rounded animate-pulse" />
+                                    <div className="h-4 w-24 bg-slate-500/20 rounded animate-pulse" />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="h-4 w-20 bg-slate-500/20 rounded animate-pulse" />
+                                <div className="h-4 w-16 bg-slate-500/20 rounded animate-pulse" />
+                                <div className="h-4 w-24 bg-slate-500/20 rounded animate-pulse" />
+                                <div className="h-4 w-14 bg-slate-500/20 rounded animate-pulse" />
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
         );
@@ -286,7 +308,8 @@ export function DataTable<T extends { id: number | string }>({
                 </div>
             </div>
 
-            <div className="glass rounded-[2rem] overflow-hidden shadow-xl border border-[var(--border-ui)]/30">
+            {/* Desktop table view - muestra todas las columnas */}
+            <div className="hidden md:block glass rounded-[2rem] overflow-hidden shadow-xl border border-[var(--border-ui)]/30">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
@@ -412,6 +435,136 @@ export function DataTable<T extends { id: number | string }>({
                                             </Link>
                                         </>
                                     )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Mobile card view */}
+            <div className="md:hidden space-y-3">
+                {filteredData.length === 0 ? (
+                    <div className="flex flex-col items-center gap-2 p-12 text-center">
+                        <Search className="h-8 w-8 opacity-20" />
+                        <span className="font-medium text-[var(--text-secondary)]">{emptyMessage}</span>
+                    </div>
+                ) : (
+                    filteredData.map((item) => {
+                        const cardColumns = columns.filter(c => !c.hideOnMobile);
+                        const titleCol = cardColumns.find(c => c.key !== 'checkbox');
+                        const bodyCols = cardColumns.filter(c => c.key !== 'checkbox' && c.key !== titleCol?.key);
+
+                        return (
+                            <div key={item.id} className="glass rounded-2xl p-4 border border-[var(--border-ui)]/30 space-y-3">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="flex-1 min-w-0">
+                                        {titleCol?.render?.(item) ?? String((item as any)[titleCol?.key ?? ''] ?? '–')}
+                                    </div>
+                                    {actions && (
+                                        <div className="flex-shrink-0">
+                                            {actions(item)}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {bodyCols.length > 0 && (
+                                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                                        {bodyCols.map(col => (
+                                            <div key={col.key} className="space-y-0.5">
+                                                <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wider">{col.label}</p>
+                                                <div className="font-medium text-[var(--text-primary)]">
+                                                    {col.render?.(item) ?? String((item as any)[col.key] ?? '–')}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {cardColumns.some(c => c.key === 'checkbox') && (() => {
+                                    const cbCol = cardColumns.find(c => c.key === 'checkbox');
+                                    return (
+                                        <div className="flex items-center gap-2 pt-3 border-t border-[var(--border-ui)]/50">
+                                            {cbCol?.render?.(item)}
+                                            <span className="text-xs text-[var(--text-secondary)]">Seleccionar</span>
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+                        );
+                    })
+                )}
+
+                {pagination && (
+                    <div className="p-4 glass rounded-2xl border border-[var(--border-ui)]/30">
+                        <div className="flex flex-col gap-4">
+                            <div className="flex items-center justify-between text-sm text-[var(--text-secondary)]">
+                                <span>
+                                    {pagination.from}-{pagination.to} de {pagination.total}
+                                </span>
+                                <div className="flex items-center gap-2">
+                                    <span>Mostrar</span>
+                                    <select
+                                        value={perPage}
+                                        onChange={(e) => handlePerPageChange(e.target.value)}
+                                        className="px-2 py-1 bg-[var(--surface)] border border-[var(--border-ui)] rounded-xl text-[var(--text-primary)] focus:border-[var(--solar-gold)] transition-all text-xs [&>option]:bg-[var(--bg-content)]"
+                                    >
+                                        {PER_PAGE_OPTIONS.map((opt) => (
+                                            <option key={opt.value} value={opt.value}>
+                                                {opt.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {pagination.links && pagination.links.length > 3 && (
+                                <div className="flex items-center justify-between gap-1">
+                                    <div className="flex items-center gap-1">
+                                        {pagination.current_page > 1 && (
+                                            <>
+                                                <Link
+                                                    href={pagination.links[0]?.url || '#'}
+                                                    className="p-2 rounded-xl bg-slate-500/10 text-[var(--text-secondary)] hover:bg-slate-500/20 transition-colors"
+                                                    title="Primera"
+                                                >
+                                                    <ChevronsLeft className="h-4 w-4" />
+                                                </Link>
+                                                <Link
+                                                    href={pagination.links.find(l => l.label.includes('Anterior') || l.label.includes('Previous'))?.url || '#'}
+                                                    className="p-2 rounded-xl bg-slate-500/10 text-[var(--text-secondary)] hover:bg-slate-500/20 transition-colors"
+                                                    title="Anterior"
+                                                >
+                                                    <ChevronLeft className="h-4 w-4" />
+                                                </Link>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    <span className="text-xs text-[var(--text-secondary)] font-medium">
+                                        Pág. {pagination.current_page} de {pagination.last_page}
+                                    </span>
+
+                                    <div className="flex items-center gap-1">
+                                        {pagination.current_page < pagination.last_page && (
+                                            <>
+                                                <Link
+                                                    href={pagination.links.find(l => l.label.includes('Siguiente') || l.label.includes('Next'))?.url || '#'}
+                                                    className="p-2 rounded-xl bg-slate-500/10 text-[var(--text-secondary)] hover:bg-slate-500/20 transition-colors"
+                                                    title="Siguiente"
+                                                >
+                                                    <ChevronRight className="h-4 w-4" />
+                                                </Link>
+                                                <Link
+                                                    href={pagination.links[pagination.links.length - 1]?.url || '#'}
+                                                    className="p-2 rounded-xl bg-slate-500/10 text-[var(--text-secondary)] hover:bg-slate-500/20 transition-colors"
+                                                    title="Última"
+                                                >
+                                                    <ChevronsRight className="h-4 w-4" />
+                                                </Link>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </div>

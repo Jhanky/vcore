@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
-use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 class AccessControlController extends Controller
@@ -34,8 +33,7 @@ class AccessControlController extends Controller
 
         return Inertia::render('AccessControl/Index', [
             'users' => User::with('roles')->withTrashed()->paginate($perPage)->withQueryString(),
-            'roles' => Role::with('permissions')->paginate($perPageRoles)->withQueryString(),
-            'permissions' => Permission::all(),
+            'roles' => Role::paginate($perPageRoles)->withQueryString(),
             'allRoles' => Role::all(),
         ]);
     }
@@ -174,15 +172,9 @@ class AccessControlController extends Controller
         $this->authorizeAccess();
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:roles,name',
-            'permissions' => 'nullable|array',
-            'permissions.*' => 'exists:permissions,name',
         ]);
 
         $role = Role::create(['name' => $validated['name']]);
-
-        if (! empty($validated['permissions'])) {
-            $role->syncPermissions($validated['permissions']);
-        }
 
         session()->put('success', 'Rol creado exitosamente.');
 
@@ -194,17 +186,9 @@ class AccessControlController extends Controller
         $this->authorizeAccess();
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:roles,name,'.$role->id,
-            'permissions' => 'nullable|array',
-            'permissions.*' => 'exists:permissions,name',
         ]);
 
         $role->update(['name' => $validated['name']]);
-
-        if (isset($validated['permissions'])) {
-            $role->syncPermissions($validated['permissions']);
-        } else {
-            $role->syncPermissions([]);
-        }
 
         session()->put('success', 'Rol actualizado exitosamente.');
 

@@ -157,7 +157,7 @@ class ClientController extends Controller
 
         $client->load(['contacts', 'interactions' => function ($query) {
             $query->orderBy('interaction_date', 'desc');
-        }, 'clientTypes', 'connectionPoint']);
+        }, 'clientTypes', 'connectionPoint', 'quotations']);
 
         return inertia('Clients/Show', [
             'client' => $client,

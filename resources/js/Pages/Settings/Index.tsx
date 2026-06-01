@@ -18,6 +18,7 @@ import {
     X,
     User as UserIcon,
 } from 'lucide-react';
+import { cn } from '@/utils/cn';
 
 type TabType = 'account' | 'appearance' | 'security' | 'mcp';
 
@@ -243,11 +244,12 @@ export default function Settings() {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-3 px-6 py-3 rounded-xl font-medium transition-all whitespace-nowrap ${
-                                    activeTab === tab.id
-                                        ? 'bg-[var(--solar-gold)] text-slate-900 shadow-[0_0_15px_rgba(251,191,36,0.3)]'
-                                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-slate-500/10'
-                                }`}
+                                className={cn(
+                                "flex items-center gap-3 px-6 py-3 rounded-xl font-medium transition-all whitespace-nowrap",
+                                activeTab === tab.id
+                                    ? 'bg-[var(--solar-gold)] text-slate-900 shadow-[0_0_15px_rgba(251,191,36,0.3)]'
+                                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-slate-500/10'
+                            )}
                             >
                                 <tab.icon className="h-5 w-5" />
                                 {tab.label}
@@ -328,7 +330,7 @@ export default function Settings() {
                                 <label className="block text-sm font-medium text-[var(--text-primary)] mb-4">
                                     Tema de Color
                                 </label>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <button
                                         onClick={() => handleThemeChange('dark')}
                                         className={`relative p-6 rounded-2xl border-2 transition-all ${
@@ -394,7 +396,7 @@ export default function Settings() {
                                         type={showCurrentPassword ? 'text' : 'password'}
                                         value={passwordData.current_password}
                                         onChange={(e) => setPasswordData({ ...passwordData, current_password: e.target.value })}
-                                        className="w-full px-4 py-3 pr-12 rounded-xl border border-[var(--border-ui)] bg-slate-500/5 text-[var(--text-primary)] focus:border-[var(--solar-gold)] focus:ring-1 focus:ring-[var(--solar-gold)]"
+                                        className="w-full px-4 py-3 pr-12 rounded-xl border border-[var(--border-ui)] bg-[var(--surface)] text-[var(--text-primary)] focus:border-[var(--solar-gold)] focus:ring-1 focus:ring-[var(--solar-gold)]"
                                         placeholder="••••••••"
                                     />
                                     <button
@@ -420,7 +422,7 @@ export default function Settings() {
                                             type={showNewPasswordInput ? 'text' : 'password'}
                                             value={passwordData.password}
                                             onChange={(e) => setPasswordData({ ...passwordData, password: e.target.value })}
-                                            className="w-full px-4 py-3 pr-20 rounded-xl border border-[var(--border-ui)] bg-slate-500/5 text-[var(--text-primary)] focus:border-[var(--solar-gold)] focus:ring-1 focus:ring-[var(--solar-gold)]"
+                                            className="w-full px-4 py-3 pr-20 rounded-xl border border-[var(--border-ui)] bg-[var(--surface)] text-[var(--text-primary)] focus:border-[var(--solar-gold)] focus:ring-1 focus:ring-[var(--solar-gold)]"
                                             placeholder="••••••••"
                                         />
                                         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
@@ -489,7 +491,7 @@ export default function Settings() {
                                                         ? 'border-green-500/50 focus:border-green-500 focus:ring-green-500/50'
                                                         : 'border-red-500/50 focus:border-red-500 focus:ring-red-500/50'
                                                     : 'border-[var(--border-ui)] focus:border-[var(--solar-gold)] focus:ring-[var(--solar-gold)]'
-                                            } bg-slate-500/5 text-[var(--text-primary)]`}
+                                            } bg-[var(--surface)] text-[var(--text-primary)]`}
                                             placeholder="••••••••"
                                         />
                                         <button
@@ -589,7 +591,7 @@ export default function Settings() {
                                             type={showToken ? 'text' : 'password'}
                                             value={mcpToken}
                                             readOnly
-                                            className="flex-1 px-4 py-3 rounded-xl border border-[var(--border-ui)] bg-slate-500/5 text-[var(--text-primary)] font-mono text-sm"
+                                            className="flex-1 px-4 py-3 rounded-xl border border-[var(--border-ui)] bg-[var(--surface)] text-[var(--text-primary)] font-mono text-sm"
                                         />
                                         <button
                                             onClick={() => setShowToken(!showToken)}

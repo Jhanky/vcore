@@ -13,7 +13,8 @@ class MaintenanceController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
-        $canManage = $user->hasPermissionTo('manage maintenances');
+        $canManage = $user->hasRole(['admin', 'gerente', 'tecnico']);
+        $canCreate = $user->hasRole(['admin', 'gerente']);
 
         $query = Maintenance::with(['project', 'technicians', 'creator']);
 
@@ -49,7 +50,7 @@ class MaintenanceController extends Controller
         $technicians = User::role('tecnico')->select('id', 'name')->get();
 
         $projects = [];
-        if ($canManage) {
+        if ($canCreate) {
             $projects = Project::select('id', 'code', 'name')->where('is_active', true)->get();
         }
 
@@ -57,6 +58,7 @@ class MaintenanceController extends Controller
             'maintenances' => $maintenances,
             'filters' => $request->only(['search', 'status', 'type', 'priority', 'per_page']),
             'canManage' => $canManage,
+            'canCreate' => $canCreate,
             'technicians' => $technicians,
             'projects' => $projects,
         ]);
@@ -65,12 +67,15 @@ class MaintenanceController extends Controller
     public function show(Maintenance $maintenance)
     {
         $maintenance->load(['project', 'technicians', 'creator']);
-        $canManage = auth()->user()->hasPermissionTo('manage maintenances');
-        $isAssigned = $maintenance->technicians->contains(auth()->id());
+        $user = auth()->user();
+        $canManage = $user->hasRole(['admin', 'gerente', 'tecnico']);
+        $canCreate = $user->hasRole(['admin', 'gerente']);
+        $isAssigned = $maintenance->technicians->contains($user->id);
 
         return Inertia::render('Maintenance/Show', [
             'maintenance' => $maintenance,
             'canManage' => $canManage,
+            'canCreate' => $canCreate,
             'isAssigned' => $isAssigned,
         ]);
     }

@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class ConnectionPointService
 {
-    private const API_BASE_URL = 'http://localhost:8002';
+    private const PROXY_URL = 'http://localhost:8002/puntos-conexion';
 
     public function syncForClient(Client $client): void
     {
@@ -20,7 +20,7 @@ class ConnectionPointService
             return;
         }
 
-        $data = $this->query($nic);
+        $data = $this->search($nic);
 
         if ($data !== null) {
             $client->connectionPoint()->updateOrCreate(
@@ -32,16 +32,33 @@ class ConnectionPointService
         }
     }
 
-    private function query(string $nic): ?array
+    public function search(string $nic): ?array
+    {
+        $result = $this->query($nic, 'aire');
+
+        if ($result !== null) {
+            return $result;
+        }
+
+        $result = $this->query($nic, 'afinia');
+
+        if ($result !== null) {
+            return $result;
+        }
+
+        return null;
+    }
+
+    private function query(string $nic, string $empresa): ?array
     {
         try {
-            $response = Http::timeout(30)->post(self::API_BASE_URL.'/puntos-conexion', [
+            $response = Http::timeout(35)->post(self::PROXY_URL, [
                 'P_CODIGO' => $nic,
-                'empresa' => 'aire',
+                'empresa' => $empresa,
             ]);
 
             if (! $response->successful()) {
-                Log::warning('Proxy error: '.$response->status());
+                Log::warning("Proxy error ({$empresa}): ".$response->status());
 
                 return null;
             }
@@ -61,7 +78,7 @@ class ConnectionPointService
             $punto = array_values($amarados)[0];
 
             return [
-                'operador' => 'aire',
+                'operador' => $empresa,
                 'codigo' => $punto['codigo'] ?? null,
                 'matricula' => $punto['matricula'] ?? null,
                 'localizacion' => $punto['localizacion'] ?? null,
@@ -75,7 +92,7 @@ class ConnectionPointService
                 'datos_json' => $data['d'],
             ];
         } catch (\Exception $e) {
-            Log::warning('ConnectionPointService error: '.$e->getMessage());
+            Log::warning("ConnectionPointService ({$empresa}) error: ".$e->getMessage());
 
             return null;
         }

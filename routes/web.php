@@ -1,12 +1,12 @@
 <?php
 
 use App\Http\Controllers\AccessControlController;
+use App\Http\Controllers\AireSeguimientoController;
 use App\Http\Controllers\BatteryController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ClientInteractionController;
 use App\Http\Controllers\ClientTypeController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\EvidencesController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\InverterController;
 use App\Http\Controllers\MaintenanceController;
@@ -17,6 +17,7 @@ use App\Http\Controllers\ProjectUpmeController;
 use App\Http\Controllers\ProposalController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplyController;
 use App\Http\Controllers\TicketController;
 use Illuminate\Foundation\Application;
@@ -65,6 +66,7 @@ Route::middleware('auth')->group(function () {
     Route::post('quotations/analyze', [QuotationController::class, 'analyzeSupplies'])->name('quotations.analyze');
     Route::post('quotations/suggest', [QuotationController::class, 'suggestSystem'])->name('quotations.suggest');
     Route::get('quotations/{quotation}/pdf', [QuotationController::class, 'generatePdf'])->name('quotations.pdf');
+    Route::post('quotations/{quotation}/design-image', [QuotationController::class, 'uploadDesignImage'])->name('quotations.design-image');
 
     Route::resource('projects', ProjectController::class);
     Route::patch('projects/{project}/status', [ProjectController::class, 'changeStatus'])->name('projects.changeStatus');
@@ -92,6 +94,18 @@ Route::middleware('auth')->group(function () {
     Route::post('projects/{project}/field-documents', [ProjectController::class, 'uploadFieldDocument'])->name('projects.field-documents');
     Route::get('projects/{project}/documents-tab', [ProjectController::class, 'getDocumentsTab'])->name('projects.documents-tab');
 
+    // Seguimiento Air-e
+    Route::get('aire-seguimiento', [AireSeguimientoController::class, 'index'])->name('aire-seguimiento.index');
+    Route::get('aire-seguimiento/create', [AireSeguimientoController::class, 'create'])->name('aire-seguimiento.create');
+    Route::post('aire-seguimiento', [AireSeguimientoController::class, 'store'])->name('aire-seguimiento.store');
+    Route::get('aire-seguimiento/{seguimiento}', [AireSeguimientoController::class, 'show'])->name('aire-seguimiento.show');
+    Route::put('aire-seguimiento/{seguimiento}', [AireSeguimientoController::class, 'update'])->name('aire-seguimiento.update');
+    Route::patch('aire-seguimiento/{seguimiento}/stage', [AireSeguimientoController::class, 'updateStage'])->name('aire-seguimiento.stage');
+    Route::post('aire-seguimiento/{seguimiento}/documents', [AireSeguimientoController::class, 'uploadDocument'])->name('aire-seguimiento.documents');
+    Route::post('aire-seguimiento/check-nic', [AireSeguimientoController::class, 'checkNic'])->name('aire-seguimiento.check-nic');
+    Route::post('aire-seguimiento/{seguimiento}/duplicate', [AireSeguimientoController::class, 'duplicate'])->name('aire-seguimiento.duplicate');
+    Route::delete('aire-seguimiento/{seguimiento}', [AireSeguimientoController::class, 'destroy'])->name('aire-seguimiento.destroy');
+
     Route::get('supplies', [SupplyController::class, 'index'])->name('supplies.index');
 
     Route::resource('panels', PanelController::class)->except(['index', 'show']);
@@ -99,8 +113,16 @@ Route::middleware('auth')->group(function () {
     Route::resource('batteries', BatteryController::class)->except(['index', 'show']);
     Route::resource('proposals', ProposalController::class);
 
-    // Evidencias
-    Route::get('/evidences', [EvidencesController::class, 'index'])->name('evidences.index');
+    // Proveedores
+    Route::get('/suppliers/list', [SupplierController::class, 'list'])->name('suppliers.list');
+    Route::resource('suppliers', SupplierController::class)->except(['show', 'edit', 'create']);
+
+    // Equipos del proyecto
+    Route::post('projects/{project}/equipment/import', [ProjectController::class, 'importEquipment'])->name('projects.equipment.import');
+    Route::put('projects/{project}/equipment/{equipment}', [ProjectController::class, 'updateEquipment'])->name('projects.equipment.update');
+    Route::delete('projects/{project}/equipment/{equipment}', [ProjectController::class, 'deleteEquipment'])->name('projects.equipment.destroy');
+    Route::post('projects/{project}/equipment/{equipment}/serials', [ProjectController::class, 'storeSerials'])->name('projects.equipment.serials.store');
+    Route::delete('projects/{project}/equipment/{equipment}/serials/{serial}', [ProjectController::class, 'deleteSerial'])->name('projects.equipment.serials.destroy');
 
     // Inventario
     Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
@@ -110,6 +132,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/inventory/{inventoryItem}', [InventoryController::class, 'destroy'])->name('inventory.destroy');
     Route::patch('/inventory/{inventoryItem}/stock', [InventoryController::class, 'adjustStock'])->name('inventory.adjust-stock');
     Route::patch('/inventory/{inventoryItem}/location', [InventoryController::class, 'changeLocation'])->name('inventory.change-location');
+    Route::get('/inventory/{inventoryItem}/movements', [InventoryController::class, 'movements'])->name('inventory.movements');
 
     // Mantenimientos
     Route::get('/maintenances', [MaintenanceController::class, 'index'])->name('maintenances.index');
@@ -129,6 +152,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/tickets/{ticket}/comments', [TicketController::class, 'addComment'])->name('tickets.comments');
     Route::patch('/tickets/{ticket}/resolve', [TicketController::class, 'resolve'])->name('tickets.resolve');
     Route::patch('/tickets/{ticket}/close', [TicketController::class, 'close'])->name('tickets.close');
+    Route::get('/tickets/attachments/{attachment}/download', [TicketController::class, 'downloadAttachment'])->name('tickets.attachments.download');
+    Route::get('/tickets/attachments/{attachment}/serve', [TicketController::class, 'serveAttachment'])->name('tickets.attachments.serve');
 });
 
 require __DIR__.'/auth.php';

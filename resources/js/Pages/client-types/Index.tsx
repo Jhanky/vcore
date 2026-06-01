@@ -10,6 +10,7 @@ import InputLabel from '@/Components/InputLabel';
 import InputError from '@/Components/InputError';
 import ConfirmModal from '@/Components/ConfirmModal';
 import Modal from '@/Components/Modal';
+import { cn } from '@/utils/cn';
 import { showToast } from '@/Components/Toast';
 
 interface ClientType {
@@ -186,7 +187,7 @@ export default function Index({ clientTypes }: Props) {
             />
 
             <Modal show={showModal} onClose={closeModal} maxWidth="md">
-                <div className="p-6 bg-[var(--surface)] text-[var(--text-primary)]">
+                <div className="p-4 sm:p-6 bg-[var(--surface)] text-[var(--text-primary)]">
                     <h2 className="text-xl font-bold text-[var(--text-primary)] mb-6 font-outfit">
                         {editingType ? 'Editar Tipo de Cliente' : 'Nuevo Tipo de Cliente'}
                     </h2>

@@ -11,7 +11,6 @@ import {
     Calculator,
     Package,
     Briefcase,
-    Image as ImageIcon,
     Settings,
     LogOut,
     User as UserIcon,
@@ -25,7 +24,9 @@ import {
     Building2,
     FileText,
     Wrench,
-    Ticket
+    Ticket,
+    Truck,
+    Radio
 } from 'lucide-react';
 
 export default function Authenticated({
@@ -61,13 +62,14 @@ export default function Authenticated({
 
     const proyectosItems = [
         { label: 'Proyectos', icon: Briefcase, route: 'projects.index', active: route().current('projects.*') },
+        { label: 'Seguimiento Air-e', icon: Radio, route: 'aire-seguimiento.index', active: route().current('aire-seguimiento.*') },
     ];
 
     const operacionesTecnicasItems = [
         { label: 'Inventario', icon: Package, route: 'inventory.index', active: route().current('inventory.*') },
+        { label: 'Proveedores', icon: Truck, route: 'suppliers.index', active: route().current('suppliers.*') },
         { label: 'Mantenimientos', icon: Wrench, route: 'maintenances.index', active: route().current('maintenances.*') },
         { label: 'Tickets', icon: Ticket, route: 'tickets.index', active: route().current('tickets.*') },
-        { label: 'Evidencias', icon: ImageIcon, route: 'evidences.index', active: route().current('evidences.*') },
     ];
 
     const isGesitonActive = gestionItems.some(item => route().current(item.route));
@@ -364,9 +366,13 @@ export default function Authenticated({
 
                 {/* User Info & Settings */}
                 <div className="p-3 border-t border-[var(--border-ui)] bg-slate-500/5">
-                    <div className={`flex items-center gap-3 p-2 rounded-xl transition-all duration-300 ${
-                        isHovered || isMobileMenuOpen ? 'bg-slate-500/10' : ''
-                    }`}>
+                    <Link
+                        href={route('profile.edit')}
+                        className={`flex items-center gap-3 p-2 rounded-xl transition-all duration-300 ${
+                            isHovered || isMobileMenuOpen ? 'bg-slate-500/10' : ''
+                        }`}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                    >
                         {user?.profile_photo_url ? (
                             <img
                                 src={user.profile_photo_url}
@@ -384,7 +390,7 @@ export default function Authenticated({
                             <p className="text-sm font-bold truncate">{user?.name ?? 'Usuario'}</p>
                             <p className="text-xs text-[var(--text-secondary)] truncate">{user?.email ?? ''}</p>
                         </div>
-                    </div>
+                    </Link>
                     
                     <Link 
                         href={route('logout')} 

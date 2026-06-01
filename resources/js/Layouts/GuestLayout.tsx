@@ -4,12 +4,15 @@ import { Link } from '@inertiajs/react';
 import { PropsWithChildren } from 'react';
 
 export default function Guest({ children }: PropsWithChildren) {
-    // Inicializar tema global (dark por defecto en guest)
     useEffect(() => {
-        const savedTheme = localStorage.getItem('theme') || 'dark';
+        const savedTheme = localStorage.getItem('theme');
+        const themeVersion = localStorage.getItem('theme_version');
+        const theme = (savedTheme && themeVersion === '2') ? savedTheme : 'light';
         const root = window.document.documentElement;
         root.classList.remove('dark', 'light');
-        root.classList.add(savedTheme);
+        root.classList.add(theme);
+        localStorage.setItem('theme', theme);
+        localStorage.setItem('theme_version', '2');
     }, []);
 
     return (

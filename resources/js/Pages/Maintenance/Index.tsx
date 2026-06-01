@@ -7,8 +7,9 @@ import MaintenanceForm from './Form';
 import { showToast } from '@/Components/Toast';
 import {
     Wrench, Plus, Calendar, CheckCircle2,
-    XCircle, AlertCircle, Clock
+    XCircle, AlertCircle, Clock, Pencil, Eye
 } from 'lucide-react';
+import { cn } from '@/utils/cn';
 
 interface MaintenanceData {
     id: number;
@@ -41,6 +42,7 @@ interface Props {
     maintenances: PaginatedData;
     filters: Record<string, any>;
     canManage: boolean;
+    canCreate: boolean;
     technicians: any[];
     projects: any[];
 }
@@ -59,7 +61,7 @@ const PRIORITY_STYLES: Record<string, string> = {
     baja: 'bg-green-500/20 text-green-400',
 };
 
-export default function MaintenanceIndex({ maintenances, filters, canManage, technicians, projects }: Props) {
+export default function MaintenanceIndex({ maintenances, filters, canManage, canCreate, technicians, projects }: Props) {
     const [showForm, setShowForm] = useState(false);
     const [editingMaintenance, setEditingMaintenance] = useState<any>(null);
 
@@ -67,9 +69,9 @@ export default function MaintenanceIndex({ maintenances, filters, canManage, tec
         router.get(route('maintenances.index'), { ...filters, search, per_page: maintenances.per_page }, { preserveState: true, replace: true });
     }, [filters, maintenances.per_page]);
 
-    const handleStatusFilter = (status: string) => {
-        router.get(route('maintenances.index'), { ...filters, status, per_page: maintenances.per_page }, { preserveState: true, replace: true });
-    };
+    const handleFilterChange = useCallback((key: string, value: string) => {
+        router.get(route('maintenances.index'), { ...filters, [key]: value || undefined, per_page: maintenances.per_page }, { preserveState: true, replace: true });
+    }, [filters, maintenances.per_page]);
 
     const handleEdit = (m: MaintenanceData) => {
         setEditingMaintenance(m);
@@ -99,11 +101,11 @@ export default function MaintenanceIndex({ maintenances, filters, canManage, tec
     };
 
     const statusBadge = (status: string) => (
-        <span className={`text-xs font-bold px-2 py-1 rounded-full ${STATUS_STYLES[status] || ''}`}>{status}</span>
+        <span className={cn('text-xs font-bold font-outfit px-2 py-1 rounded-full', STATUS_STYLES[status])}>{status}</span>
     );
 
     const priorityBadge = (priority: string) => (
-        <span className={`text-xs font-bold px-2 py-1 rounded-full ${PRIORITY_STYLES[priority] || ''}`}>{priority}</span>
+        <span className={cn('text-xs font-bold font-outfit px-2 py-1 rounded-full', PRIORITY_STYLES[priority])}>{priority}</span>
     );
 
     const columns = [
@@ -111,7 +113,7 @@ export default function MaintenanceIndex({ maintenances, filters, canManage, tec
             key: 'code',
             label: 'Código',
             render: (m: MaintenanceData) => (
-                <Link href={route('maintenances.show', m.id)} className="font-mono text-sm font-bold text-[var(--solar-gold)] hover:brightness-125">
+                <Link href={route('maintenances.show', m.id)} className="font-mono text-sm font-bold font-outfit text-[var(--solar-gold)] hover:brightness-125">
                     {m.code}
                 </Link>
             ),
@@ -121,8 +123,8 @@ export default function MaintenanceIndex({ maintenances, filters, canManage, tec
             label: 'Título',
             render: (m: MaintenanceData) => (
                 <div>
-                    <p className="font-bold text-[var(--text-primary)]">{m.title}</p>
-                    {m.project && <p className="text-xs text-[var(--text-secondary)]">{m.project.code} - {m.project.name}</p>}
+                    <p className="font-bold font-outfit text-[var(--text-primary)]">{m.title}</p>
+                    {m.project && <p className="text-xs font-outfit text-[var(--text-secondary)]">{m.project.code} - {m.project.name}</p>}
                 </div>
             ),
         },
@@ -130,7 +132,7 @@ export default function MaintenanceIndex({ maintenances, filters, canManage, tec
             key: 'type',
             label: 'Tipo',
             render: (m: MaintenanceData) => (
-                <span className={`text-xs font-medium ${m.type === 'preventivo' ? 'text-blue-400' : 'text-orange-400'}`}>
+                <span className={cn('text-xs font-medium font-outfit', m.type === 'preventivo' ? 'text-blue-400' : 'text-orange-400')}>
                     {m.type === 'preventivo' ? 'Preventivo' : 'Correctivo'}
                 </span>
             ),
@@ -161,12 +163,12 @@ export default function MaintenanceIndex({ maintenances, filters, canManage, tec
             render: (m: MaintenanceData) => (
                 <div className="flex -space-x-2">
                     {m.technicians?.slice(0, 3).map((t: any) => (
-                        <div key={t.id} className="h-7 w-7 rounded-full bg-[var(--solar-gold)] flex items-center justify-center text-white text-xs font-bold border-2 border-[var(--bg-main)]" title={t.name}>
+                        <div key={t.id} className="h-7 w-7 rounded-full bg-[var(--solar-gold)] flex items-center justify-center text-[var(--text-primary)] text-xs font-bold border-2 border-[var(--bg-main)]" title={t.name}>
                             {t.name.charAt(0)}
                         </div>
                     ))}
                     {m.technicians?.length > 3 && (
-                        <div className="h-7 w-7 rounded-full bg-slate-500/20 flex items-center justify-center text-[var(--text-secondary)] text-xs font-bold">
+                        <div className="h-7 w-7 rounded-full bg-[var(--surface)] flex items-center justify-center text-[var(--text-secondary)] text-xs font-bold">
                             +{m.technicians.length - 3}
                         </div>
                     )}
@@ -178,66 +180,65 @@ export default function MaintenanceIndex({ maintenances, filters, canManage, tec
     return (
         <AuthenticatedLayout header="Mantenimientos">
             <Head title="Mantenimientos" />
-            <div className="glass rounded-[2rem] p-6 border border-[var(--border-ui)]/30">
-                <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-                    <div className="flex items-center gap-3">
-                        <div className="flex rounded-xl border border-[var(--border-ui)] overflow-hidden">
-                            {['', 'programado', 'en_progreso', 'completado', 'cancelado'].map((s) => (
-                                <button
-                                    key={s}
-                                    onClick={() => handleStatusFilter(s)}
-                                    className={`px-3 py-2 text-sm font-medium transition-colors border-r border-[var(--border-ui)] last:border-r-0 ${
-                                        (filters.status || '') === s ? 'bg-[var(--solar-gold)] text-slate-900' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                                    }`}
-                                >
-                                    {s === '' ? 'Todos' : s === 'programado' ? 'Programados' : s === 'en_progreso' ? 'En Progreso' : s === 'completado' ? 'Completados' : 'Cancelados'}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                    {canManage && (
-                        <button
-                            onClick={() => { setEditingMaintenance(null); setShowForm(true); }}
-                            className="flex items-center gap-2 bg-[var(--solar-gold)] text-slate-900 font-bold px-5 py-2.5 rounded-xl hover:brightness-110 transition-all shadow-lg"
-                        >
-                            <Plus className="h-4 w-4" /> Nuevo Mantenimiento
-                        </button>
-                    )}
-                </div>
-
-                <DataTable
+            <DataTable
                     data={maintenances.data}
                     columns={columns}
                     searchPlaceholder="Buscar por código o título..."
                     emptyMessage="No hay mantenimientos registrados"
                     pagination={maintenances}
                     onSearch={handleSearch}
+                    onFilterChange={handleFilterChange}
+                    filters={[{
+                        key: 'status',
+                        label: 'Estado',
+                        options: [
+                            { value: 'programado', label: 'Programados' },
+                            { value: 'en_progreso', label: 'En Progreso' },
+                            { value: 'completado', label: 'Completados' },
+                            { value: 'cancelado', label: 'Cancelados' },
+                        ],
+                    }]}
                     actions={(m: MaintenanceData) => (
                         <div className="flex gap-1">
+                            <Link
+                                href={route('maintenances.show', m.id)}
+                                className="inline-flex p-2 rounded-xl hover:bg-[var(--solar-gold)]/10 text-[var(--text-secondary)] hover:text-[var(--solar-gold)] transition-all"
+                                title="Ver detalle"
+                            >
+                                <Eye className="h-4 w-4" />
+                            </Link>
                             {m.status === 'programado' && (
-                                <button onClick={() => handleStart(m.id)} className="p-2 rounded-xl hover:bg-emerald-500/10 text-[var(--text-secondary)] hover:text-emerald-400 transition-colors" title="Iniciar">
+                                <button onClick={() => handleStart(m.id)} className="inline-flex p-2 rounded-xl hover:bg-emerald-500/10 text-[var(--text-secondary)] hover:text-emerald-400 transition-all" title="Iniciar">
                                     <Clock className="h-4 w-4" />
                                 </button>
                             )}
                             {m.status === 'en_progreso' && (
-                                <button onClick={() => handleComplete(m.id)} className="p-2 rounded-xl hover:bg-emerald-500/10 text-[var(--text-secondary)] hover:text-emerald-400 transition-colors" title="Completar">
+                                <button onClick={() => handleComplete(m.id)} className="inline-flex p-2 rounded-xl hover:bg-emerald-500/10 text-[var(--text-secondary)] hover:text-emerald-400 transition-all" title="Completar">
                                     <CheckCircle2 className="h-4 w-4" />
                                 </button>
                             )}
                             {(m.status === 'programado' || m.status === 'en_progreso') && canManage && (
-                                <button onClick={() => handleCancel(m.id)} className="p-2 rounded-xl hover:bg-red-500/10 text-[var(--text-secondary)] hover:text-red-400 transition-colors" title="Cancelar">
+                                <button onClick={() => handleCancel(m.id)} className="inline-flex p-2 rounded-xl hover:bg-red-500/10 text-[var(--text-secondary)] hover:text-red-400 transition-all" title="Cancelar">
                                     <XCircle className="h-4 w-4" />
                                 </button>
                             )}
                             {canManage && (
-                                <button onClick={() => handleEdit(m)} className="p-2 rounded-xl hover:bg-[var(--solar-gold)]/10 text-[var(--text-secondary)] hover:text-[var(--solar-gold)] transition-colors" title="Editar">
-                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                <button onClick={() => handleEdit(m)} className="inline-flex p-2 rounded-xl hover:bg-blue-500/10 text-[var(--text-secondary)] hover:text-blue-400 transition-all" title="Editar">
+                                    <Pencil className="h-4 w-4" />
                                 </button>
                             )}
                         </div>
                     )}
+                    headerAction={canCreate && (
+                        <button
+                            onClick={() => { setEditingMaintenance(null); setShowForm(true); }}
+                            className="flex items-center gap-2 bg-[var(--solar-gold)] text-slate-900 font-bold px-5 py-2.5 rounded-xl hover:brightness-110 transition-all shadow-lg"
+                        >
+                            <Plus className="h-4 w-4" />
+                            <span>Nuevo Mantenimiento</span>
+                        </button>
+                    )}
                 />
-            </div>
 
             <Modal show={showForm} onClose={() => setShowForm(false)} maxWidth="2xl">
                 <MaintenanceForm

@@ -1,13 +1,15 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import {
-    Plus, Search, FileText, Eye, Trash2,
+    Plus, FileText, Eye, Trash2,
     CheckCircle, DollarSign, Zap
 } from 'lucide-react';
+import { cn } from '@/utils/cn';
 import { useState, useCallback } from 'react';
 import { DataTable, Column } from '@/Components/DataTable';
 import ConfirmModal from '@/Components/ConfirmModal';
 import { showToast } from '@/Components/Toast';
+import { formatCurrencySimple } from '@/utils/format';
 
 const STATUS_COLORS: Record<string, string> = {
     'Borrador'  : 'bg-slate-500/10 text-slate-400 border-slate-500/20',
@@ -19,7 +21,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 function formatCOP(value: number) {
     if (!value) return '$0';
-    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(value);
+    return formatCurrencySimple(value);
 }
 
 export default function Index({ quotations, statistics, filters }: any) {
@@ -149,7 +151,7 @@ export default function Index({ quotations, statistics, filters }: any) {
                             <Icon className={`w-6 h-6 ${color}`} />
                         </div>
                         <div>
-                            <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wider">{label}</p>
+                            <p className="text-xs font-outfit text-[var(--text-secondary)] uppercase tracking-wider">{label}</p>
                             <p className={`text-xl font-bold font-outfit ${color}`}>{value}</p>
                         </div>
                     </div>

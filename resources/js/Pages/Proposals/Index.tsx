@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { Search, Calendar, User, ArrowRight, MessageSquare, Clock } from 'lucide-react';
 import { useState } from 'react';
 import { showToast } from '@/Components/Toast';
+import { cn } from '@/utils/cn';
+import { formatCurrencySimple } from '@/utils/format';
 
 export default function Index({ proposals, filters }: any) {
     const [search, setSearch] = useState(filters.search || '');
@@ -13,7 +15,7 @@ export default function Index({ proposals, filters }: any) {
         router.get(route('proposals.index'), { search }, { preserveState: true });
     };
 
-    const fmt = (v: number) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
+    const fmt = (v: number) => formatCurrencySimple(v);
 
     return (
         <AuthenticatedLayout header="Seguimiento de Propuestas">
@@ -43,7 +45,7 @@ export default function Index({ proposals, filters }: any) {
                             key={proposal.id}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="glass p-6 rounded-3xl border border-[var(--border-ui)] hover:border-[var(--solar-gold)]/30 transition-all group"
+                            className="glass p-6 rounded-[2rem] border border-[var(--border-ui)] hover:border-[var(--solar-gold)]/30 transition-all group"
                         >
                             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                                 <div className="space-y-3">
@@ -61,7 +63,7 @@ export default function Index({ proposals, filters }: any) {
                                     </h3>
                                     <div className="flex flex-wrap items-center gap-4 text-sm text-[var(--text-secondary)]">
                                         <div className="flex items-center gap-2">
-                                            <div className="w-6 h-6 rounded-full bg-slate-500/10 flex items-center justify-center">
+                                            <div className="w-6 h-6 rounded-full bg-[var(--surface)] flex items-center justify-center">
                                                 <User className="w-3 h-3 text-[var(--solar-gold)]" />
                                             </div>
                                             {proposal.client.name}
@@ -92,7 +94,7 @@ export default function Index({ proposals, filters }: any) {
                             <div className="mt-6 flex items-center gap-4 pt-4 border-t border-[var(--border-ui)]/50">
                                 <div className="flex -space-x-2">
                                     {[1, 2].map(i => (
-                                        <div key={i} className="w-8 h-8 rounded-full border-2 border-[var(--bg-main)] bg-slate-500/10 flex items-center justify-center text-[10px] font-bold">
+                                        <div key={i} className="w-8 h-8 rounded-full border-2 border-[var(--bg-main)] bg-[var(--surface)] flex items-center justify-center text-[10px] font-bold">
                                             {i === 1 ? 'JC' : 'AM'}
                                         </div>
                                     ))}
@@ -109,7 +111,7 @@ export default function Index({ proposals, filters }: any) {
                     ))}
 
                     {proposals.data.length === 0 && (
-                        <div className="glass p-12 rounded-3xl text-center border-2 border-dashed border-[var(--border-ui)]">
+                        <div className="glass p-12 rounded-[2rem] text-center border-2 border-dashed border-[var(--border-ui)]">
                             <Clock className="w-12 h-12 text-[var(--text-secondary)] mx-auto mb-4 opacity-20" />
                             <h3 className="text-lg font-bold text-[var(--text-primary)]">Sin propuestas en seguimiento</h3>
                             <p className="text-[var(--text-secondary)] text-sm mt-1">Todas tus cotizaciones enviadas aparecerán aquí para que no pierdas ninguna oportunidad.</p>

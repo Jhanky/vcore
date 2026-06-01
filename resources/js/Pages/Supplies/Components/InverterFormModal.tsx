@@ -71,13 +71,13 @@ export default function InverterFormModal({ show, onClose, inverter }: Props) {
 
     return (
         <Modal show={show} onClose={onClose} maxWidth="xl">
-            <div className="p-6 bg-[var(--surface)] text-[var(--text-primary)]">
+            <div className="p-4 sm:p-6 bg-[var(--surface)] text-[var(--text-primary)]">
                 <h2 className="text-xl font-bold font-outfit mb-6 text-[var(--solar-gold)]">
                     {isEditing ? 'Editar Inversor' : 'Nuevo Inversor'}
                 </h2>
 
                 <form onSubmit={submit} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <InputLabel htmlFor="brand" value="Marca" />
                             <TextInput

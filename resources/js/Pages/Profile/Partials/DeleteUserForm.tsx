@@ -69,7 +69,7 @@ export default function DeleteUserForm({
             </DangerButton>
 
             <Modal show={confirmingUserDeletion} onClose={closeModal}>
-                <form onSubmit={deleteUser} className="p-6 bg-[var(--surface)] text-[var(--text-primary)]">
+                <form onSubmit={deleteUser} className="p-4 sm:p-6 bg-[var(--surface)] text-[var(--text-primary)]">
                     <h2 className="text-lg font-bold text-[var(--text-primary)] font-outfit">
                         Are you sure you want to delete your account?
                     </h2>

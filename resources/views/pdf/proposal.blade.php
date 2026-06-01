@@ -6,6 +6,8 @@
     <title>Propuesta {{ $refCode }}</title>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <style>
         /* ── Core Configuration ──────────────────────────── */
         :root {
@@ -27,7 +29,7 @@
         }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', 'Segoe UI', Roboto, Arial, sans-serif;
             font-size: 10pt;
             color: var(--negro);
             line-height: 1.25; /* Required by instructions */
@@ -56,18 +58,18 @@
         /* ── Header & Footer ────────────────────────────── */
         .header {
             position: absolute;
-            top: 15mm;
+            top: 3mm;
             left: 15mm;
             right: 15mm;
             display: flex;
             justify-content: space-between;
-            align-items: flex-end;
-            padding-bottom: 8px;
+            align-items: center;
+            padding-bottom: 10px;
             border-bottom: 3px double var(--lima);
         }
 
         .header-logo img {
-            height: 40px;
+            height: 65px;
             width: auto;
         }
 
@@ -142,19 +144,18 @@
 
         /* ── Indicators (Cards) ─────────────────────────── */
         .indicators-grid {
-            display: table;
-            width: 100%;
-            border-spacing: 10px;
-            margin: 20px -10px;
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
         }
 
         .indicator-card {
-            display: table-cell;
+            flex: 1;
             background-color: var(--verde-osc);
             padding: 20px 10px;
             text-align: center;
             border-radius: 8px;
-            width: 25%;
+            min-width: 0;
         }
 
         .indicator-value {
@@ -305,17 +306,27 @@
         .justify-between { justify-content: space-between; }
         .items-center { align-items: center; }
         .gap-4 { gap: 1rem; }
+        .content-area { margin-top: 15mm; }
     </style>
 </head>
 <body>
 
     @php
-        $logoPath = public_path('images/logo_energy.png');
-        if (!file_exists($logoPath)) {
-            $logoPath = public_path('images/logo_energy.png'); // Fallback check
+        $logoData = '';
+        $logoSrc = '';
+        foreach (['png' => 'image/png', 'webp' => 'image/webp'] as $ext => $mime) {
+            $path = public_path("images/logo_energy.{$ext}");
+            if (file_exists($path)) {
+                $logoData = base64_encode(file_get_contents($path));
+                $logoSrc = "data:{$mime};base64,{$logoData}";
+                break;
+            }
         }
-        $logoData = file_exists($logoPath) ? base64_encode(file_get_contents($logoPath)) : '';
-        $logoSrc = 'data:image/png;base64,' . $logoData;
+        $companyPhone = '305 819 1216';
+        $companyWebsite = 'energy4cero.com';
+        $companyName = 'ENERGY 4.0 S.A.S.';
+        $signerName = 'Tomás Mojica';
+        $proposalVersion = $quotation->updated_at ? $quotation->updated_at->format('Ymd') : date('Ymd');
     @endphp
 
     {{-- ══════════════════════════════════════════════════════
@@ -344,16 +355,16 @@
                 <tr><td class="label">Cliente</td><td>{{ $client->name ?? 'N/A' }}</td></tr>
                 <tr><td class="label">Ubicación</td><td>{{ $client->city ?? 'Colombia' }}{{ $client->state ? ', ' . $client->state : '' }}</td></tr>
                 <tr><td class="label">Fecha</td><td>{{ \Carbon\Carbon::parse($quotation->issue_date ?? now())->translatedFormat('d \d\e F \d\e Y') }}</td></tr>
-                <tr><td class="label">Versión</td><td>3.0</td></tr>
+                <tr><td class="label">Versión</td><td>{{ $proposalVersion }}</td></tr>
             </table>
 
             <div style="margin-top: 60px; font-size: 11pt; color: var(--gris-text);">
-                Contacto: Tel. 305 819 1216 · <strong>energy4cero.com</strong>
+                Contacto: Tel. {{ $companyPhone }} · <strong>{{ $companyWebsite }}</strong>
             </div>
         </div>
 
         <footer class="footer">
-            <div>energy4cero.com · Tel: 305 819 1216</div>
+            <div>{{ $companyWebsite }} · Tel: {{ $companyPhone }}</div>
             <div>Pág. 1 / 7</div>
         </footer>
     </div>
@@ -367,12 +378,14 @@
             <div class="header-logo">
                 @if($logoData)
                     <img src="{{ $logoSrc }}" alt="Energy 4.0">
+                @else
+                    <span style="font-weight: 800; color: var(--verde-osc); font-size: 18pt;">ENERGY 4.0</span>
                 @endif
             </div>
             <div class="header-ref">PROPUESTA TÉCNICA-ECONÓMICA · {{ $refCode }}</div>
         </header>
 
-        <div style="margin-top: 30px;">
+        <div class="content-area">
             <div class="sec-head">1. NUESTRA EXPERIENCIA</div>
             <p>
                 <strong>ENERGY 4.0 S.A.S.</strong> es una empresa líder en el sector energético colombiano, especializada en la transición hacia fuentes renovables. Transformamos el consumo de energía en ahorro tangible y sostenibilidad ambiental para los sectores residencial, comercial e industrial.
@@ -417,7 +430,7 @@
         </div>
 
         <footer class="footer">
-            <div>energy4cero.com · Tel: 305 819 1216</div>
+            <div>{{ $companyWebsite }} · Tel: {{ $companyPhone }}</div>
             <div>Pág. 2 / 7</div>
         </footer>
     </div>
@@ -428,11 +441,17 @@
     ══════════════════════════════════════════════════════════ --}}
     <div class="page">
         <header class="header">
-            <div class="header-logo">@if($logoData)<img src="{{ $logoSrc }}" alt="Energy 4.0">@endif</div>
+            <div class="header-logo">
+                @if($logoData)
+                    <img src="{{ $logoSrc }}" alt="Energy 4.0">
+                @else
+                    <span style="font-weight: 800; color: var(--verde-osc); font-size: 18pt;">ENERGY 4.0</span>
+                @endif
+            </div>
             <div class="header-ref">PROPUESTA TÉCNICA-ECONÓMICA · {{ $refCode }}</div>
         </header>
 
-        <div style="margin-top: 30px;">
+        <div class="content-area">
             <div class="sec-head">4. COMPONENTES DEL SISTEMA</div>
             <p>Utilizamos tecnología de punta con certificaciones internacionales para asegurar la máxima vida útil de su inversión.</p>
 
@@ -461,7 +480,7 @@
         </div>
 
         <footer class="footer">
-            <div>energy4cero.com · Tel: 305 819 1216</div>
+            <div>{{ $companyWebsite }} · Tel: {{ $companyPhone }}</div>
             <div>Pág. 3 / 7</div>
         </footer>
     </div>
@@ -472,11 +491,17 @@
     ══════════════════════════════════════════════════════════ --}}
     <div class="page">
         <header class="header">
-            <div class="header-logo">@if($logoData)<img src="{{ $logoSrc }}" alt="Energy 4.0">@endif</div>
+            <div class="header-logo">
+                @if($logoData)
+                    <img src="{{ $logoSrc }}" alt="Energy 4.0">
+                @else
+                    <span style="font-weight: 800; color: var(--verde-osc); font-size: 18pt;">ENERGY 4.0</span>
+                @endif
+            </div>
             <div class="header-ref">PROPUESTA TÉCNICA-ECONÓMICA · {{ $refCode }}</div>
         </header>
 
-        <div style="margin-top: 30px;">
+        <div class="content-area">
             <div class="sec-head">5. INVERSIÓN DEL PROYECTO</div>
             
             <div class="value-box">
@@ -521,12 +546,12 @@
             </table>
 
             <p style="font-size: 8pt; font-style: italic; color: var(--gris-text);">
-                *Los pagos se realizarán mediante transferencia bancaria a la cuenta de ENERGY 4.0 S.A.S.
+                *Los pagos se realizarán mediante transferencia bancaria a la cuenta de {{ $companyName }}.
             </p>
         </div>
 
         <footer class="footer">
-            <div>energy4cero.com · Tel: 305 819 1216</div>
+            <div>{{ $companyWebsite }} · Tel: {{ $companyPhone }}</div>
             <div>Pág. 4 / 7</div>
         </footer>
     </div>
@@ -537,11 +562,17 @@
     ══════════════════════════════════════════════════════════ --}}
     <div class="page">
         <header class="header">
-            <div class="header-logo">@if($logoData)<img src="{{ $logoSrc }}" alt="Energy 4.0">@endif</div>
+            <div class="header-logo">
+                @if($logoData)
+                    <img src="{{ $logoSrc }}" alt="Energy 4.0">
+                @else
+                    <span style="font-weight: 800; color: var(--verde-osc); font-size: 18pt;">ENERGY 4.0</span>
+                @endif
+            </div>
             <div class="header-ref">PROPUESTA TÉCNICA-ECONÓMICA · {{ $refCode }}</div>
         </header>
 
-        <div style="margin-top: 30px;">
+        <div class="content-area">
             <div class="sec-head">7. PROYECCIÓN FINANCIERA (20 AÑOS)</div>
             <p>Análisis del retorno de inversión y ahorro acumulado a largo plazo.</p>
 
@@ -593,7 +624,7 @@
         </div>
 
         <footer class="footer">
-            <div>energy4cero.com · Tel: 305 819 1216</div>
+            <div>{{ $companyWebsite }} · Tel: {{ $companyPhone }}</div>
             <div>Pág. 5 / 7</div>
         </footer>
     </div>
@@ -604,11 +635,17 @@
     ══════════════════════════════════════════════════════════ --}}
     <div class="page">
         <header class="header">
-            <div class="header-logo">@if($logoData)<img src="{{ $logoSrc }}" alt="Energy 4.0">@endif</div>
+            <div class="header-logo">
+                @if($logoData)
+                    <img src="{{ $logoSrc }}" alt="Energy 4.0">
+                @else
+                    <span style="font-weight: 800; color: var(--verde-osc); font-size: 18pt;">ENERGY 4.0</span>
+                @endif
+            </div>
             <div class="header-ref">PROPUESTA TÉCNICA-ECONÓMICA · {{ $refCode }}</div>
         </header>
 
-        <div style="margin-top: 30px;">
+        <div class="content-area">
             <div class="sec-head">8. DISEÑO PRELIMINAR Y DISTRIBUCIÓN</div>
             
             @php
@@ -620,11 +657,30 @@
                 Se proyecta la instalación de <strong>{{ $panelCount }} módulos solares de {{ $panelPowerW }}W</strong>, con una distribución optimizada para maximizar la captación solar y facilitar labores de mantenimiento.
             </p>
 
+            @if($designImage)
+                <div style="margin-top: 20px; text-align: center;">
+                    <div style="font-weight: 600; color: var(--gris-text); margin-bottom: 10px;">VISTA AÉREA PRELIMINAR</div>
+                    <img src="{{ $designImage }}" alt="Diseño fotovoltaico" style="width: 100%; max-height: 320px; object-fit: contain; border-radius: 12px;">
+                </div>
+            @else
             <div class="design-img-placeholder">
-                <div style="color: var(--gris); font-size: 40pt; margin-bottom: 10px;">📸</div>
+                <svg width="60" height="60" viewBox="0 0 60 60" fill="none" style="margin-bottom: 10px;">
+                    <rect x="5" y="25" width="50" height="30" rx="2" fill="#bdd641" opacity="0.6"/>
+                    <rect x="8" y="28" width="14" height="24" rx="1" fill="#558c4a" opacity="0.4"/>
+                    <rect x="24" y="28" width="14" height="24" rx="1" fill="#558c4a" opacity="0.4"/>
+                    <rect x="40" y="28" width="14" height="24" rx="1" fill="#558c4a" opacity="0.4"/>
+                    <polygon points="30,2 3,28 57,28" fill="#558c4a" opacity="0.3"/>
+                    <line x1="18" y1="52" x2="18" y2="58" stroke="#CCCCCC" stroke-width="1.5"/>
+                    <line x1="44" y1="52" x2="44" y2="58" stroke="#CCCCCC" stroke-width="1.5"/>
+                    <line x1="30" y1="10" x2="30" y2="16" stroke="#7cba52" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="30" y1="10" x2="35" y2="13" stroke="#7cba52" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="30" y1="10" x2="25" y2="13" stroke="#7cba52" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="30" cy="10" r="3" fill="#bdd641"/>
+                </svg>
                 <div style="font-weight: 600; color: var(--gris-text);">VISTA AÉREA PRELIMINAR</div>
                 <div style="font-size: 8pt; color: var(--gris);">[Inserte aquí imagen satelital con distribución de paneles]</div>
             </div>
+            @endif
 
             <div style="margin-top: 30px;">
                 <ul class="bullet-list">
@@ -640,7 +696,7 @@
         </div>
 
         <footer class="footer">
-            <div>energy4cero.com · Tel: 305 819 1216</div>
+            <div>{{ $companyWebsite }} · Tel: {{ $companyPhone }}</div>
             <div>Pág. 6 / 7</div>
         </footer>
     </div>
@@ -651,11 +707,17 @@
     ══════════════════════════════════════════════════════════ --}}
     <div class="page">
         <header class="header">
-            <div class="header-logo">@if($logoData)<img src="{{ $logoSrc }}" alt="Energy 4.0">@endif</div>
+            <div class="header-logo">
+                @if($logoData)
+                    <img src="{{ $logoSrc }}" alt="Energy 4.0">
+                @else
+                    <span style="font-weight: 800; color: var(--verde-osc); font-size: 18pt;">ENERGY 4.0</span>
+                @endif
+            </div>
             <div class="header-ref">PROPUESTA TÉCNICA-ECONÓMICA · {{ $refCode }}</div>
         </header>
 
-        <div style="margin-top: 30px;">
+        <div class="content-area">
             <div class="sec-head">9. EXCLUSIONES</div>
             <ul class="bullet-list">
                 <li>Obras civiles mayores o refuerzos estructurales de cubierta.</li>
@@ -673,20 +735,20 @@
             <div class="firma-section">
                 <p>Cordialmente,</p>
                 <div style="margin-top: 30px;">
-                    <div class="firma-name">Tomás M.</div>
-                    <div class="firma-title">Director Comercial — ENERGY 4.0 S.A.S.</div>
-                    <div style="font-size: 9pt; color: var(--gris-text);">Tel: 305 819 1216</div>
+                    <div class="firma-name">{{ $signerName }}</div>
+                    <div class="firma-title">Asesor Comercial — {{ $companyName }}</div>
+                    <div style="font-size: 9pt; color: var(--gris-text);">Tel: {{ $companyPhone }}</div>
                 </div>
             </div>
 
             <div class="thanks-msg">
-                <h2>Gracias por confiar en ENERGY 4.0 S.A.S.</h2>
+                <h2>Gracias por confiar en {{ $companyName }}</h2>
                 <p>Juntos estamos construyendo el futuro de la energía en Colombia.</p>
             </div>
         </div>
 
         <footer class="footer">
-            <div>energy4cero.com · Tel: 305 819 1216</div>
+            <div>{{ $companyWebsite }} · Tel: {{ $companyPhone }}</div>
             <div>Pág. 7 / 7</div>
         </footer>
     </div>

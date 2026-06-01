@@ -1,11 +1,11 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, Edit } from 'lucide-react';
-import ClientHeader from '@/Components/ClientHeader';
-import ContactInfo from '@/Components/ContactInfo';
-import ProjectData from '@/Components/ProjectData';
-import InteractionTimeline from '@/Components/InteractionTimeline';
-import QuotationCTA from '@/Components/QuotationCTA';
+import ClientHeader from '@/features/clients/components/ClientHeader';
+import ContactInfo from '@/features/clients/components/ContactInfo';
+import ProjectData from '@/features/projects/components/ProjectData';
+import InteractionTimeline from '@/features/clients/components/InteractionTimeline';
+import QuotationCTA from '@/features/quotations/components/QuotationCTA';
 
 interface Interaction {
     id: number;
@@ -41,10 +41,11 @@ interface Contact {
 
 interface Quotation {
     id: number;
-    title: string;
+    project_name: string;
     status: string;
     created_at: string;
-    total: number;
+    expiration_date: string;
+    total_value: number;
 }
 
 interface Client {
@@ -94,7 +95,7 @@ export default function Show({ client }: Props) {
             <Head title={`Cliente: ${client.name}`} />
 
             {/* Barra Superior */}
-            <div className="mb-6 flex justify-between items-center">
+            <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <Link
                     href={route('clients.index')}
                     className="inline-flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--solar-gold)] transition-colors"

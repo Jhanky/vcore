@@ -4,6 +4,7 @@ import {
     BarChart, Bar, Line, PieChart, Pie, Cell, ComposedChart,
     XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
+import { formatCurrency } from '@/utils/format';
 import {
     Sun, Users, Calculator, TrendingUp, FileText,
     DollarSign, Briefcase, Building2, MapPin,
@@ -25,12 +26,6 @@ const PIPELINE_COLORS: Record<string, string> = {
 };
 
 const PIE_COLORS = ['#10B981', '#F59E0B', '#3B82F6', '#8B5CF6', '#EC4899', '#14B8A6'];
-
-const formatCurrency = (value: number) => {
-    if (!value && value !== 0) return '$0';
-    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value);
-};
-
 const ChartTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload?.length) return null;
     return (

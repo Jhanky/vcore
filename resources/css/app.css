@@ -150,6 +150,7 @@ h1, h2, h3, h4, .font-display {
 /* Custom Scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
+    height: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -163,4 +164,13 @@ h1, h2, h3, h4, .font-display {
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: var(--brand-primary);
+}
+
+/* Hide scrollbar utility (compatible con tailwind-scrollbar) */
+.hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
 }

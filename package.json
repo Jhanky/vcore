@@ -4,7 +4,9 @@
     "type": "module",
     "scripts": {
         "build": "tsc && vite build && vite build --ssr",
-        "dev": "vite"
+        "dev": "vite",
+        "proxy": "cd services/connection-proxy && python -m uvicorn main:app --host 0.0.0.0 --port 8002",
+        "dev:all": "concurrently \"npm run dev\" \"php artisan serve\" \"npm run proxy\""
     },
     "devDependencies": {
         "@headlessui/react": "^2.0.0",

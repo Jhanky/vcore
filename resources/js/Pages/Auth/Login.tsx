@@ -1,19 +1,18 @@
 import Checkbox from '@/Components/Checkbox';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import Modal from '@/Components/Modal';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler, useState} from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import { Head, useForm } from '@inertiajs/react';
+import { FormEventHandler, useState } from 'react';
+import { Eye, EyeOff, ShieldAlert } from 'lucide-react';
 
 export default function Login({
     status,
-    canResetPassword,
 }: {
     status?: string;
-    canResetPassword: boolean;
 }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         login: '',
@@ -22,6 +21,7 @@ export default function Login({
     });
 
     const [showPassword, setShowPassword] = useState(false);
+    const [showForgotModal, setShowForgotModal] = useState(false);
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -117,17 +117,35 @@ export default function Login({
                     </PrimaryButton>
                     
                     <div className="flex items-center justify-center">
-                        {canResetPassword && (
-                            <Link
-                                href={route('password.request')}
-                                className="text-xs text-[var(--text-secondary)] underline hover:text-[var(--verde-medio)] focus:outline-none"
-                            >
-                                ¿Olvidaste tu contraseña?
-                            </Link>
-                        )}
+                        <button
+                            type="button"
+                            onClick={() => setShowForgotModal(true)}
+                            className="text-xs text-[var(--text-secondary)] underline hover:text-[var(--verde-medio)] focus:outline-none"
+                        >
+                            ¿Olvidaste tu contraseña?
+                        </button>
                     </div>
                 </div>
             </form>
+
+            <Modal show={showForgotModal} onClose={() => setShowForgotModal(false)} maxWidth="sm">
+                <div className="p-8 text-center">
+                    <ShieldAlert className="mx-auto h-12 w-12 text-[var(--verde-medio)] mb-4" />
+                    <h2 className="text-xl font-bold font-outfit text-[var(--verde-oscuro)] mb-3">
+                        Restablecer Contraseña
+                    </h2>
+                    <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                        Por favor, comunícate con el administrador del sistema para que te restablezca la contraseña.
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => setShowForgotModal(false)}
+                        className="mt-6 px-6 py-2.5 bg-[var(--verde-medio)] text-white rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
+                    >
+                        Entendido
+                    </button>
+                </div>
+            </Modal>
         </GuestLayout>
     );
 }

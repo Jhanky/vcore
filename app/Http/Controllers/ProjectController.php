@@ -3,17 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\EquipmentSerial;
 use App\Models\Milestone;
 use App\Models\Project;
 use App\Models\ProjectDocument;
+use App\Models\ProjectEquipment;
 use App\Models\ProjectState;
 use App\Models\ProjectStateField;
+use App\Models\Supplier;
 use App\Models\TransitionEvidence;
 use App\Models\User;
 use App\Services\ProjectService;
 use App\Services\StateFieldService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
@@ -47,11 +51,15 @@ class ProjectController extends Controller
 
         $projects = $this->projectService->list($filters, $perPage, auth()->user());
         $states = $this->projectService->getStates();
+        $clients = Client::select('id', 'name', 'email')->orderBy('name')->get();
+        $users = User::select('id', 'name')->orderBy('name')->get();
         $statistics = $this->projectService->getStatistics(auth()->user());
 
         return Inertia::render('projects/ProjectsPage', [
             'projects' => $projects,
             'states' => $states,
+            'clients' => $clients,
+            'users' => $users,
             'statistics' => $statistics,
             'filters' => $filters,
         ]);
@@ -59,15 +67,7 @@ class ProjectController extends Controller
 
     public function create()
     {
-        $clients = Client::select('id', 'name', 'email')->get();
-        $users = User::select('id', 'name')->get();
-        $states = $this->projectService->getStates();
-
-        return Inertia::render('projects/ProjectModal', [
-            'clients' => $clients,
-            'users' => $users,
-            'states' => $states,
-        ]);
+        return redirect()->route('projects.index');
     }
 
     public function store(Request $request)
@@ -107,12 +107,14 @@ class ProjectController extends Controller
         $availableStates = $this->projectService->getAvailableStates($project);
         $requirements = $this->projectService->getRequirements($project);
         $milestoneTypes = $this->projectService->getMilestoneTypes();
+        $suppliers = Supplier::where('is_active', true)->orderBy('name')->get(['id', 'name', 'nit']);
 
         return Inertia::render('projects/ProjectDetailsPage', [
             'project' => $project,
             'availableStates' => $availableStates,
             'requirements' => $requirements,
             'milestoneTypes' => $milestoneTypes,
+            'suppliers' => $suppliers,
         ]);
     }
 
@@ -122,14 +124,11 @@ class ProjectController extends Controller
         $project = $this->projectService->getById($project->id);
         $clients = Client::select('id', 'name', 'email')->get();
         $users = User::select('id', 'name')->get();
-        $states = $this->projectService->getStates();
 
         return Inertia::render('projects/ProjectModal', [
             'project' => $project,
             'clients' => $clients,
             'users' => $users,
-            'states' => $states,
-            'isEditing' => true,
         ]);
     }
 
@@ -531,6 +530,136 @@ class ProjectController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
+    }
+
+    public function importEquipment(Project $project)
+    {
+        if (! $project->quotation_id) {
+            return back()->with('error', 'El proyecto no tiene una cotización asociada.');
+        }
+
+        $project->load('quotation.products');
+
+        DB::beginTransaction();
+        try {
+            foreach ($project->quotation->products as $product) {
+                ProjectEquipment::updateOrCreate(
+                    [
+                        'project_id' => $project->id,
+                        'product_type' => $product->product_type,
+                        'product_id' => $product->product_id,
+                    ],
+                    [
+                        'quotation_product_id' => $product->id,
+                        'brand' => $product->snapshot_brand,
+                        'model' => $product->snapshot_model,
+                        'specs' => $product->snapshot_specs,
+                        'quantity' => $product->quantity,
+                    ]
+                );
+            }
+            DB::commit();
+            session()->put('success', 'Equipos importados correctamente desde la cotización.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            session()->put('error', 'Error al importar equipos: '.$e->getMessage());
+        }
+
+        return back();
+    }
+
+    public function updateEquipment(Request $request, Project $project, ProjectEquipment $equipment)
+    {
+        if ($equipment->project_id !== $project->id) {
+            abort(403, 'Equipo no pertenece a este proyecto');
+        }
+
+        $validated = $request->validate([
+            'supplier_id' => 'nullable|exists:suppliers,id',
+            'quantity' => 'nullable|integer|min:1',
+        ]);
+
+        $equipment->update($validated);
+
+        session()->put('success', 'Equipo actualizado correctamente.');
+
+        return back();
+    }
+
+    public function deleteEquipment(Request $request, Project $project, ProjectEquipment $equipment)
+    {
+        if ($equipment->project_id !== $project->id) {
+            abort(403, 'Equipo no pertenece a este proyecto');
+        }
+
+        $serialCount = $equipment->serials()->count();
+        if ($serialCount > 0) {
+            $msg = "No se puede eliminar el equipo porque tiene {$serialCount} serial(es) asignados. Elimina primero los seriales.";
+            if ($request->wantsJson()) {
+                return response()->json(['error' => $msg], 422);
+            }
+            return back()->with('error', $msg);
+        }
+
+        $equipment->delete();
+
+        session()->put('success', 'Equipo eliminado del proyecto.');
+
+        return back();
+    }
+
+    public function storeSerials(Request $request, Project $project, ProjectEquipment $equipment)
+    {
+        if ($equipment->project_id !== $project->id) {
+            abort(403, 'Equipo no pertenece a este proyecto');
+        }
+
+        $validated = $request->validate([
+            'serials' => 'required|array',
+            'serials.*' => 'required|string|max:255',
+        ]);
+
+        $currentCount = $equipment->serials()->count();
+        $newCount = count($validated['serials']);
+        $totalAfter = $currentCount + $newCount;
+
+        if ($totalAfter > $equipment->quantity) {
+            $maxNew = $equipment->quantity - $currentCount;
+            $msg = "Límite excedido: el equipo tiene cantidad {$equipment->quantity} y ya tiene {$currentCount} serial(es). ";
+            $msg .= $maxNew > 0
+                ? "Puedes agregar hasta {$maxNew} más."
+                : 'No puedes agregar más seriales.';
+
+            return response()->json(['error' => $msg], 422);
+        }
+
+        $created = [];
+        foreach ($validated['serials'] as $serial) {
+            $created[] = EquipmentSerial::create([
+                'project_equipment_id' => $equipment->id,
+                'serial_number' => trim($serial),
+            ]);
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json(['serials' => $created]);
+        }
+
+        $count = count($created);
+        session()->put('success', "{$count} serial(es) agregado(s) correctamente.");
+
+        return back();
+    }
+
+    public function deleteSerial(Project $project, ProjectEquipment $equipment, EquipmentSerial $serial)
+    {
+        if ($equipment->project_id !== $project->id || $serial->project_equipment_id !== $equipment->id) {
+            abort(403, 'Serial no pertenece a este equipo');
+        }
+
+        $serial->delete();
+
+        return back();
     }
 
     public function getDocumentsTab(Project $project)

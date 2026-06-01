@@ -15,20 +15,22 @@ export function useThemeInit() {
 
     useEffect(() => {
         const savedTheme = localStorage.getItem('theme');
+        const themeVersion = localStorage.getItem('theme_version');
         const userTheme = auth?.user?.theme;
-        const theme = savedTheme || userTheme || 'dark';
+        const theme = (savedTheme && themeVersion === '2') ? savedTheme : (userTheme || 'light');
 
         const root = window.document.documentElement;
         root.classList.remove('dark', 'light');
         root.classList.add(theme);
         localStorage.setItem('theme', theme);
+        localStorage.setItem('theme_version', '2');
     }, [auth?.user?.theme]);
 
     // Sincronizar con otras pestañas
     useEffect(() => {
         const handler = (e: StorageEvent) => {
             if (e.key !== 'theme') return;
-            const theme = e.newValue || 'dark';
+            const theme = e.newValue || 'light';
             const root = window.document.documentElement;
             root.classList.remove('dark', 'light');
             root.classList.add(theme);

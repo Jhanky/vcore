@@ -8,20 +8,30 @@ import { showToast } from '@/Components/Toast';
 
 interface Props {
     item?: any;
+    projects?: any[];
+    defaultType?: string;
     onClose: () => void;
 }
 
-export default function InventoryForm({ item, onClose }: Props) {
+export default function InventoryForm({ item, projects, defaultType, onClose }: Props) {
     const isEditing = !!item;
+    const initialType = item?.type || defaultType || 'material';
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
-        type: item?.type || 'material',
+        type: initialType,
         code: item?.code || '',
+        brand: item?.brand || '',
+        model: item?.model || '',
+        serial_number: item?.serial_number || '',
+        maintenance_interval_days: item?.maintenance_interval_days ?? '',
+        supplier: item?.supplier || '',
+        category: item?.category || '',
         name: item?.name || '',
         description: item?.description || '',
         unit: item?.unit || 'unidad',
         quantity: item?.quantity ?? 0,
         min_stock: item?.min_stock ?? '',
+        purchase_cost: item?.purchase_cost ?? '',
         status: item?.status || '',
         last_maintenance: item?.last_maintenance || '',
         location_type: item?.location_type || 'warehouse',
@@ -29,6 +39,10 @@ export default function InventoryForm({ item, onClose }: Props) {
         warehouse_location: item?.warehouse_location || '',
         notes: item?.notes || '',
     });
+
+    const resetForm = () => {
+        reset();
+    };
 
     useEffect(() => {
         if (item) reset();
@@ -49,16 +63,47 @@ export default function InventoryForm({ item, onClose }: Props) {
                 onSuccess: () => {
                     showToast('Item creado.', 'success');
                     onClose();
-                    reset();
+                    resetForm();
                 },
             });
         }
     };
 
+    const isTool = data.type === 'tool';
+
+    const toolStatuses = [
+        { value: '', label: 'Seleccionar...' },
+        { value: 'disponible', label: 'Disponible' },
+        { value: 'en_proyecto', label: 'En Proyecto' },
+        { value: 'en_mantenimiento', label: 'En Mantenimiento' },
+        { value: 'dado_de_baja', label: 'Dado de Baja' },
+    ];
+
+    const materialStatuses = [
+        { value: '', label: 'Seleccionar...' },
+        { value: 'disponible', label: 'Disponible' },
+        { value: 'en_proyecto', label: 'En Proyecto' },
+        { value: 'agotado', label: 'Agotado' },
+        { value: 'descontinuado', label: 'Descontinuado' },
+    ];
+
+    const materialCategories = [
+        { value: '', label: 'Seleccionar...' },
+        { value: 'cable', label: 'Cable' },
+        { value: 'panel', label: 'Panel Solar' },
+        { value: 'inversor', label: 'Inversor' },
+        { value: 'bateria', label: 'Batería' },
+        { value: 'estructura', label: 'Estructura' },
+        { value: 'proteccion', label: 'Protección' },
+        { value: 'conector', label: 'Conector' },
+        { value: 'tuberia', label: 'Tubería' },
+        { value: 'otro', label: 'Otro' },
+    ];
+
     return (
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
             <h2 className="text-xl font-bold font-outfit text-[var(--text-primary)] mb-6">
-                {isEditing ? 'Editar Item' : 'Nuevo Item'}
+                {isEditing ? 'Editar Item' : `Nuevo ${isTool ? 'Herramienta' : 'Material'}`}
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -67,7 +112,7 @@ export default function InventoryForm({ item, onClose }: Props) {
                         <InputLabel value="Tipo" />
                         <select
                             value={data.type}
-                            onChange={(e) => setData('type', e.target.value)}
+                            onChange={(e) => { setData('type', e.target.value); setData('status', ''); }}
                             className="w-full rounded-xl border-[var(--border-ui)] bg-transparent text-[var(--text-primary)] px-4 py-3 [&>option]:bg-[var(--bg-content)]"
                         >
                             <option value="material">Material</option>
@@ -113,6 +158,84 @@ export default function InventoryForm({ item, onClose }: Props) {
                     </div>
 
                     <div>
+                        <InputLabel value="Marca" />
+                        <input
+                            type="text"
+                            value={data.brand}
+                            onChange={(e) => setData('brand', e.target.value)}
+                            className="w-full rounded-xl border-[var(--border-ui)] bg-slate-500/5 text-[var(--text-primary)] px-4 py-3"
+                            placeholder="Ej: DeWalt, Kaiser"
+                        />
+                        <InputError message={errors.brand} />
+                    </div>
+
+                    {isTool ? (
+                        <>
+                            <div>
+                                <InputLabel value="Modelo" />
+                                <input
+                                    type="text"
+                                    value={data.model}
+                                    onChange={(e) => setData('model', e.target.value)}
+                                    className="w-full rounded-xl border-[var(--border-ui)] bg-slate-500/5 text-[var(--text-primary)] px-4 py-3"
+                                    placeholder="Ej: DCD796"
+                                />
+                                <InputError message={errors.model} />
+                            </div>
+                            <div>
+                                <InputLabel value="Número de serie" />
+                                <input
+                                    type="text"
+                                    value={data.serial_number}
+                                    onChange={(e) => setData('serial_number', e.target.value)}
+                                    className="w-full rounded-xl border-[var(--border-ui)] bg-slate-500/5 text-[var(--text-primary)] px-4 py-3"
+                                    placeholder="Serial del equipo"
+                                />
+                                <InputError message={errors.serial_number} />
+                            </div>
+                            <div>
+                                <InputLabel value="Intervalo mantenimiento (días)" />
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={data.maintenance_interval_days}
+                                    onChange={(e) => setData('maintenance_interval_days', e.target.value)}
+                                    className="w-full rounded-xl border-[var(--border-ui)] bg-slate-500/5 text-[var(--text-primary)] px-4 py-3"
+                                    placeholder="Ej: 90"
+                                />
+                                <InputError message={errors.maintenance_interval_days} />
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div>
+                                <InputLabel value="Proveedor" />
+                                <input
+                                    type="text"
+                                    value={data.supplier}
+                                    onChange={(e) => setData('supplier', e.target.value)}
+                                    className="w-full rounded-xl border-[var(--border-ui)] bg-slate-500/5 text-[var(--text-primary)] px-4 py-3"
+                                    placeholder="Nombre del proveedor"
+                                />
+                                <InputError message={errors.supplier} />
+                            </div>
+                            <div>
+                                <InputLabel value="Categoría" />
+                                <select
+                                    value={data.category}
+                                    onChange={(e) => setData('category', e.target.value)}
+                                    className="w-full rounded-xl border-[var(--border-ui)] bg-transparent text-[var(--text-primary)] px-4 py-3 [&>option]:bg-[var(--bg-content)]"
+                                >
+                                    {materialCategories.map((opt) => (
+                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                    ))}
+                                </select>
+                                <InputError message={errors.category} />
+                            </div>
+                        </>
+                    )}
+
+                    <div>
                         <InputLabel value="Unidad de medida" />
                         <select
                             value={data.unit}
@@ -155,32 +278,43 @@ export default function InventoryForm({ item, onClose }: Props) {
                         />
                     </div>
 
-                    {data.type === 'tool' && (
-                        <>
-                            <div>
-                                <InputLabel value="Estado" />
-                                <select
-                                    value={data.status}
-                                    onChange={(e) => setData('status', e.target.value)}
-                                    className="w-full rounded-xl border-[var(--border-ui)] bg-transparent text-[var(--text-primary)] px-4 py-3 [&>option]:bg-[var(--bg-content)]"
-                                >
-                                    <option value="disponible">Disponible</option>
-                                    <option value="en_proyecto">En Proyecto</option>
-                                    <option value="en_mantenimiento">En Mantenimiento</option>
-                                    <option value="dado_de_baja">Dado de Baja</option>
-                                </select>
-                            </div>
+                    <div>
+                        <InputLabel value="Costo unitario ($)" />
+                        <input
+                            type="number"
+                            step="100"
+                            min="0"
+                            value={data.purchase_cost}
+                            onChange={(e) => setData('purchase_cost', e.target.value)}
+                            className="w-full rounded-xl border-[var(--border-ui)] bg-slate-500/5 text-[var(--text-primary)] px-4 py-3"
+                            placeholder="COP"
+                        />
+                    </div>
 
-                            <div>
-                                <InputLabel value="Último mantenimiento" />
-                                <input
-                                    type="date"
-                                    value={data.last_maintenance}
-                                    onChange={(e) => setData('last_maintenance', e.target.value)}
-                                    className="w-full rounded-xl border-[var(--border-ui)] bg-slate-500/5 text-[var(--text-primary)] px-4 py-3"
-                                />
-                            </div>
-                        </>
+                    <div>
+                        <InputLabel value="Estado" />
+                        <select
+                            value={data.status}
+                            onChange={(e) => setData('status', e.target.value)}
+                            className="w-full rounded-xl border-[var(--border-ui)] bg-transparent text-[var(--text-primary)] px-4 py-3 [&>option]:bg-[var(--bg-content)]"
+                        >
+                            {(isTool ? toolStatuses : materialStatuses).map((opt) => (
+                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                        </select>
+                        <InputError message={errors.status} />
+                    </div>
+
+                    {isTool && (
+                        <div>
+                            <InputLabel value="Último mantenimiento" />
+                            <input
+                                type="date"
+                                value={data.last_maintenance}
+                                onChange={(e) => setData('last_maintenance', e.target.value)}
+                                className="w-full rounded-xl border-[var(--border-ui)] bg-slate-500/5 text-[var(--text-primary)] px-4 py-3"
+                            />
+                        </div>
                     )}
 
                     <div>
@@ -198,13 +332,16 @@ export default function InventoryForm({ item, onClose }: Props) {
                     {data.location_type === 'project' ? (
                         <div>
                             <InputLabel value="Proyecto" />
-                            <input
-                                type="text"
+                            <select
                                 value={data.project_id}
                                 onChange={(e) => setData('project_id', e.target.value)}
-                                className="w-full rounded-xl border-[var(--border-ui)] bg-slate-500/5 text-[var(--text-primary)] px-4 py-3"
-                                placeholder="ID del proyecto"
-                            />
+                                className="w-full rounded-xl border-[var(--border-ui)] bg-transparent text-[var(--text-primary)] px-4 py-3 [&>option]:bg-[var(--bg-content)]"
+                            >
+                                <option value="">Seleccionar proyecto...</option>
+                                {projects?.map((p: any) => (
+                                    <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
+                                ))}
+                            </select>
                         </div>
                     ) : (
                         <div>

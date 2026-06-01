@@ -1,10 +1,11 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Plus, Phone, Mail, MapPin, Eye, Pencil, Trash2, Zap, DollarSign, Maximize2, Users, TrendingUp, BarChart3 } from 'lucide-react';
+import { Head, Link, router } from '@inertiajs/react';
+import { Plus, Phone, Mail, MapPin, Eye, Pencil, Trash2, Zap, DollarSign, Maximize2, Users, TrendingUp } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import { DataTable, Column } from '@/Components/DataTable';
 import ConfirmModal from '@/Components/ConfirmModal';
 import { showToast } from '@/Components/Toast';
+import { cn } from '@/utils/cn';
 
 interface Props {
     clients: any;
@@ -189,7 +190,7 @@ export default function Index({ clients, filters, clientTypes, statistics }: Pro
                         {client.name.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                        <div className="font-bold text-[var(--text-primary)] text-lg">{client.name}</div>
+                        <div className="font-bold font-outfit text-[var(--text-primary)] text-lg">{client.name}</div>
                         <div className="text-xs text-[var(--text-secondary)] flex items-center gap-1 mt-1">
                             <MapPin className="h-3 w-3" />
                             {client.city ? `${client.city}, ${client.state}` : 'Sin direccion'}
@@ -201,17 +202,18 @@ export default function Index({ clients, filters, clientTypes, statistics }: Pro
         {
             key: 'contact',
             label: 'Contacto',
+            hideOnMobile: true,
             render: (client) => (
                 <div className="space-y-1">
                     {client.email && (
                         <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-                            <Mail className="h-4 w-4 text-slate-400" />
+                            <Mail className="h-4 w-4 text-[var(--text-secondary)]" />
                             <span className="truncate max-w-[180px]">{client.email}</span>
                         </div>
                     )}
                     {client.phone && (
                         <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-                            <Phone className="h-4 w-4 text-slate-400" />
+                            <Phone className="h-4 w-4 text-[var(--text-secondary)]" />
                             {client.phone}
                         </div>
                     )}
@@ -241,6 +243,7 @@ export default function Index({ clients, filters, clientTypes, statistics }: Pro
         {
             key: 'project_data',
             label: 'Datos del Proyecto',
+            hideOnMobile: true,
             render: (client) => (
                 <div className="grid grid-cols-2 gap-2 text-xs">
                     <div className="flex items-center gap-1.5 text-[var(--text-secondary)]">
@@ -297,7 +300,7 @@ export default function Index({ clients, filters, clientTypes, statistics }: Pro
             {selectedIds.length > 0 && (
                 <div className="mb-4 p-4 glass rounded-2xl flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-[var(--text-primary)]">
+                        <span className="text-sm font-bold font-outfit text-[var(--text-primary)]">
                             {selectedIds.length} cliente(s) seleccionado(s)
                         </span>
                     </div>
@@ -318,7 +321,7 @@ export default function Index({ clients, filters, clientTypes, statistics }: Pro
                         <Users className="w-6 h-6 text-blue-400" />
                     </div>
                     <div>
-                        <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Total Clientes</p>
+                        <p className="text-xs font-outfit text-[var(--text-secondary)] uppercase tracking-wider">Total Clientes</p>
                         <p className="text-xl font-bold font-outfit text-blue-400">{statistics.total}</p>
                     </div>
                 </div>
@@ -328,7 +331,7 @@ export default function Index({ clients, filters, clientTypes, statistics }: Pro
                         <Zap className="w-6 h-6 text-emerald-400" />
                     </div>
                     <div>
-                        <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Consumo Total</p>
+                        <p className="text-xs font-outfit text-[var(--text-secondary)] uppercase tracking-wider">Consumo Total</p>
                         <p className="text-xl font-bold font-outfit text-emerald-400">{statistics.total_consumption.toLocaleString('es-CO')} kWh</p>
                     </div>
                 </div>
@@ -338,7 +341,7 @@ export default function Index({ clients, filters, clientTypes, statistics }: Pro
                         <TrendingUp className="w-6 h-6 text-violet-400" />
                     </div>
                     <div>
-                        <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Consumo Promedio</p>
+                        <p className="text-xs font-outfit text-[var(--text-secondary)] uppercase tracking-wider">Consumo Promedio</p>
                         <p className="text-xl font-bold font-outfit text-violet-400">{statistics.avg_consumption.toLocaleString('es-CO')} kWh</p>
                     </div>
                 </div>
@@ -348,7 +351,7 @@ export default function Index({ clients, filters, clientTypes, statistics }: Pro
                         <DollarSign className="w-6 h-6 text-[var(--solar-gold)]" />
                     </div>
                     <div>
-                        <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Factura Total Mensual</p>
+                        <p className="text-xs font-outfit text-[var(--text-secondary)] uppercase tracking-wider">Factura Total Mensual</p>
                         <p className="text-xl font-bold font-outfit text-[var(--solar-gold)]">${Math.round(statistics.total_monthly_bill).toLocaleString('es-CO')}</p>
                     </div>
                 </div>

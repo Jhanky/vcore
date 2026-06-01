@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
 import {
-    Plus, Search, Zap, Cpu, Battery as BatteryIcon,
+    Plus, Zap, Cpu, Battery as BatteryIcon,
     Trash2, Edit, AlertCircle, FileText
 } from 'lucide-react';
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
@@ -11,6 +11,7 @@ import InverterFormModal from './Components/InverterFormModal';
 import BatteryFormModal from './Components/BatteryFormModal';
 import ConfirmModal from '@/Components/ConfirmModal';
 import { showToast } from '@/Components/Toast';
+import { cn } from '@/utils/cn';
 
 const TAB_CONFIG = {
     panels: {
@@ -74,8 +75,8 @@ export default function Index({ panels, inverters, batteries }: any) {
                 label: 'Marca / Modelo',
                 render: (item) => (
                     <div className="flex flex-col">
-                        <span className="text-[10px] font-bold uppercase text-[var(--solar-gold)]">{item.brand}</span>
-                        <span className="text-[var(--text-primary)] font-bold">{item.model}</span>
+                        <span className="text-[10px] font-bold uppercase font-outfit text-[var(--solar-gold)]">{item.brand}</span>
+                        <span className="text-[var(--text-primary)] font-bold font-outfit">{item.model}</span>
                     </div>
                 ),
             },
@@ -85,6 +86,7 @@ export default function Index({ panels, inverters, batteries }: any) {
             base.push({
                 key: 'power',
                 label: 'Potencia',
+                hideOnMobile: true,
                 render: (item) => (
                     <div className="flex items-center gap-2">
                         <Zap className="h-4 w-4 text-amber-400" />
@@ -99,6 +101,7 @@ export default function Index({ panels, inverters, batteries }: any) {
                 {
                     key: 'power',
                     label: 'Potencia',
+                    hideOnMobile: true,
                     render: (item) => (
                         <div className="flex items-center gap-2">
                             <Cpu className="h-4 w-4 text-blue-400" />
@@ -109,12 +112,13 @@ export default function Index({ panels, inverters, batteries }: any) {
                 {
                     key: 'types',
                     label: 'Sistema / Red',
+                    hideOnMobile: true,
                     render: (item) => (
                         <div className="flex gap-2">
-                            <span className="px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-400 text-[10px] font-bold uppercase">
+                            <span className="px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-400 text-[10px] font-bold uppercase font-outfit">
                                 {item.system_type}
                             </span>
-                            <span className="px-2 py-0.5 rounded-lg bg-slate-500/10 text-[var(--text-secondary)] text-[10px] font-bold uppercase">
+                            <span className="px-2 py-0.5 rounded-lg bg-slate-500/10 text-[var(--text-secondary)] text-[10px] font-bold uppercase font-outfit">
                                 {item.grid_type}
                             </span>
                         </div>
@@ -128,6 +132,7 @@ export default function Index({ panels, inverters, batteries }: any) {
                 {
                     key: 'capacity',
                     label: 'Capacidad / Voltaje',
+                    hideOnMobile: true,
                     render: (item) => (
                         <div className="flex items-center gap-2">
                             <BatteryIcon className="h-4 w-4 text-emerald-400" />
@@ -138,8 +143,9 @@ export default function Index({ panels, inverters, batteries }: any) {
                 {
                     key: 'type',
                     label: 'Tipo',
+                    hideOnMobile: true,
                     render: (item) => (
-                        <span className="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase">
+                        <span className="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase font-outfit">
                             {item.type}
                         </span>
                     ),
@@ -152,7 +158,7 @@ export default function Index({ panels, inverters, batteries }: any) {
                 key: 'price',
                 label: 'Precio',
                 render: (item) => (
-                    <span className="text-[var(--text-primary)] font-bold font-mono text-sm">
+                    <span className="text-[var(--text-primary)] font-bold font-mono font-outfit text-sm">
                         ${parseFloat(item.price).toLocaleString()}
                     </span>
                 ),
@@ -160,6 +166,7 @@ export default function Index({ panels, inverters, batteries }: any) {
             {
                 key: 'datasheet',
                 label: 'Ficha',
+                hideOnMobile: true,
                 render: (item) => (
                     item.datasheet_url ? (
                         <a
@@ -321,11 +328,9 @@ export default function Index({ panels, inverters, batteries }: any) {
                                 <button
                                     key={tab}
                                     onClick={() => handleTabChange(tab)}
-                                    className={`px-6 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap flex items-center gap-2 ${
-                                        activeTab === tab
-                                            ? 'bg-[var(--solar-gold)] text-slate-900 shadow-sm'
-                                            : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                                    }`}
+                                    className={cn('px-6 py-2 rounded-xl text-sm font-bold font-outfit transition-all whitespace-nowrap flex items-center gap-2', activeTab === tab
+                                        ? 'bg-[var(--solar-gold)] text-slate-900 shadow-sm'
+                                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]')}
                                 >
                                     <TabIcon className="h-4 w-4" />
                                     {TAB_CONFIG[tab].label}
@@ -358,14 +363,14 @@ export default function Index({ panels, inverters, batteries }: any) {
                         <>
                             <button
                                 onClick={() => openEdit(item)}
-                                className="p-2 rounded-xl hover:bg-blue-500/10 text-blue-400 transition-colors"
+                                className="inline-flex p-2 rounded-xl hover:bg-blue-500/10 text-[var(--text-secondary)] hover:text-blue-400 transition-all"
                                 title="Editar"
                             >
                                 <Edit className="h-4 w-4" />
                             </button>
                             <button
                                 onClick={() => handleDelete(item.id, activeTab)}
-                                className="p-2 rounded-xl hover:bg-red-500/10 text-red-400 transition-colors"
+                                className="inline-flex p-2 rounded-xl hover:bg-red-500/10 text-[var(--text-secondary)] hover:text-red-400 transition-all"
                                 title="Eliminar"
                             >
                                 <Trash2 className="h-4 w-4" />
